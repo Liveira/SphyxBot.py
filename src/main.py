@@ -16,7 +16,7 @@ bot.remove_command("help")
 #Variaveis
 class token():
     def token():
-        bottoken='Seu prefixo!'
+        bottoken='Seu token!'
         return bottoken
 epoch = datetime.datetime.utcfromtimestamp(0)
 #Funções
