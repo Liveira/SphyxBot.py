@@ -14,7 +14,7 @@ def prefix(bot,message):
 bot = commands.Bot(command_prefix=prefix,case_insensitive=True,intents=intents)
 bot.remove_command("help")
 #Variaveis
-class token():
+class Token():
     def token():
         bottoken='Seu token!'
         return bottoken
@@ -37,28 +37,9 @@ async def UDados() -> json:
         return json.load(f)
 async def CConta(user: discord.Member):
     dados = await UDados()
-    if str(user.id) in dados['Users']:
-        return
-    else:
-        dados['Users'][str(user.id)] = {'nome':user.name,'desc':'Usuario','rep':0,"xp_time":0}
-        with open('users.json','w') as f:
-            json.dump(dados,f,indent=4)
-async def GCConta(guild: discord.Guild):
-    dados = await Dados()
-    if str(guild.id) in dados["Servers"]:
-        return
-    else:
-        dados['Servers'][str(guild.id)] = {'users':{},'config':{'time_xp':30,'role_mute':0,'welcome_channel':0,'mediaxp':10,'WelcomeMsg':' Bem vindo! ','LeaveMsg':'Saiu do servidor!','dmpu':0,'prefix':'#','autorole':{},'controle':0},'reg':{},'contIDreg':0}
-    with open('dados.json','w') as f:
-        json.dump(dados,f,indent=4)
-async def loop():
-    while True:
-        await asyncio.sleep(15)
-        dados = await Dados()
-        udados = await UDados()
-        cont=0
-        contU=0
-        contD=0
+    
+	
+	# achei desnessesario cu
         async for guild in bot.fetch_guilds(limit=None):
             cont+=1
             if str(guild.id) not in dados['Servers']:
@@ -96,11 +77,7 @@ async def outroloop():
 class events(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
-        print('.................')
-        print('Sphyx está ligado!')
-        print('.................')
-        print('       LOG       ')
-        print('                 ')
+        print("gamer")
         await loop()  
     @commands.Cog.listener()
     async def on_message(self,message):
