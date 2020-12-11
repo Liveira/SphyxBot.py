@@ -2,7 +2,7 @@
 Um bot de discord brasileiro feito totalmente em Python feito por mim
 
 # Posso copiar e colar?
-Sim, o bot é Open Source mas ainda sim você precisar das os creditos
+Sim, o bot é Open Source mas ainda sim você precisar dar os creditos
 
 # O que tem no bot?
 
