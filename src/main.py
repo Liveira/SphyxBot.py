@@ -1,16 +1,19 @@
 import asyncio
 from io import BytesIO
+from operator import iand
 from random import randrange
 import time
 import requests
-import discord,json,datetime,random,os
+import discord,json,datetime,random,os,textwrap
 from PIL import Image as img
+from PIL import ImageFont as imgfont
+from PIL import ImageDraw as imgdraw
 from discord.ext import commands
 from discord.ext.commands.errors import RoleNotFound
 from discord.flags import Intents
 intents = intents = discord.Intents.all()
 log = ""
-ultimafoto=None
+ultimafoto={}
 def prefix(bot,message):
     with open("dados.json","r") as f:
 	    prefixo = json.load(f)
@@ -105,19 +108,20 @@ class events(commands.Cog):
     async def on_message(self,message):
         try:
             global ultimafoto
-            ultimafoto = message.attachments
-            print(ultimafoto)
+            yeah = message.attachments
+            try:
+                if yeah[0].size > 0:
+                    ultimafoto[message.guild.id]= yeah
+            except IndexError:
+                pass
         except TypeError as error:
             print(error)
         if message.author.bot != True:
 
             dados = await Dados()
             config = dados['Servers'][str(message.guild.id)]['config']
-            if bot.user.mentioned_in(message):
-                if message.content == '@everyone' or message.content == '@here':
-                    pass
-                else:
-                    await message.channel.send(f":question: | `{config['prefix']}help` **<- Comando de ajuda**")
+            if  message.content == f"<@!{bot.user.id}>":
+                await message.channel.send(f":question: | `{config['prefix']}help` **<- Comando de ajuda**")
             xp = dados['Servers'][str(message.guild.id)]['users'][str(message.author.id)]['xp']
             dados['Servers'][str(message.guild.id)]['users'][str(message.author.id)]['msg'] += 1
             user = message.author
@@ -809,29 +813,159 @@ class Diversao():
             await ctx.send(embed=embed)
     class Ciencia(commands.Cog):
         @commands.command(name='ciencia',aliases=['acienciafoilongedemais','simounao'])
-        async def ciencia(self,ctx,file: discord.Attachment=None):
-            template = img.open('imgs/ciencia.jpg')
-                     if file == None:
+        async def ciencia(self,ctx,user: discord.User=None):
+            if user == None:
+                file = ctx.message.attachments
                 try:
-                    url = ultimafoto[0].url
+                    foto = file[0].url    
                 except IndexError:
-                    pass
+                    try:
+                        foto = ultimafoto[ctx.guild.id][0].url               
+                    except KeyError:
+                        foto = ctx.author.avatar_url
             else:
-                foto = file.url
+                foto = user.avatar_url
+            template = img.open('imgs/ciencia.jpg')
             url = requests.get(url=foto)
             foto = img.open(BytesIO(url.content))
             foto = foto.resize((906,495))
             foto = foto.copy()
             template.paste(foto,(0,122))
-            nome_do_arquivo=f"{randrange(0,10000)}.png"
+            nome_do_arquivo=f"ciencia.png"
             template.save(nome_do_arquivo)
             arq = discord.File(open(nome_do_arquivo,'rb'))
-            await ctx.send(file=arq)
-
-
-    #0,122
+            msg = await ctx.send(file=arq)
+            await msg.add_reaction('😮')
+            await msg.add_reaction('😠')
+    class Art(commands.Cog):
+        @commands.command(name='art',aliases=['arte'])
+        async def art(self,ctx,user: discord.User=None):
+            if user == None:
+                file = ctx.message.attachments
+                try:
+                    foto = file[0].url    
+                except IndexError:
+                    try:
+                        foto = ultimafoto[ctx.guild.id][0].url               
+                    except KeyError:
+                        foto = ctx.author.avatar_url
+            #439 42, 145,170
+            #440, 381
+            else:
+                foto = user.avatar_url
+            template = img.open('imgs/bbfoul.png')
+            url = requests.get(url=foto)
+            foto = img.open(BytesIO(url.content))
+            foto = foto.resize((146,171))
+            foto = foto.copy()
+            template.paste(foto,(439,41))
+            foto = foto.copy()
+            template.paste(foto,(439,380))
+            nome_do_arquivo=f"btfoul.png"
+            template.save(nome_do_arquivo)
+            arq = discord.File(open(nome_do_arquivo,'rb'))
+            msg = await ctx.send(file=arq)
+    class Fogo(commands.Cog): 
+        @commands.command(name='fogo',aliases=['fire'])
+        async def art(self,ctx,user: discord.User=None):
+            if user == None:
+                file = ctx.message.attachments
+                try:
+                    foto = file[0].url    
+                except IndexError:
+                    try:
+                        foto = ultimafoto[ctx.guild.id][0].url               
+                    except KeyError:
+                        foto = ctx.author.avatar_url
+            else:
+                foto = user.avatar_url
+            kak = img.new('RGBA',(720,871))
+        
+            template = img.open('imgs/fogo.png')
+            url = requests.get(url=foto)
+            foto = img.open(BytesIO(url.content))
+            foto = foto.resize((219,294))
+            foto = foto.copy()
+            kak.paste(foto,(59,76))
+            template = template.copy()
+            kak.paste(template,(0,0),template)
+            nome_do_arquivo=f"fire.png"
+            kak.save(nome_do_arquivo)
+            arq = discord.File(open(nome_do_arquivo,'rb'))#218 294
+            msg = await ctx.send(file=arq)
+    class Triste(commands.Cog):
+        @commands.command(name='triste',aliases=['sad'])
+        async def art(self,ctx,user: discord.User=None):
+            if user == None:
+                file = ctx.message.attachments
+                try:
+                    foto = file[0].url    
+                except IndexError:
+                    try:
+                        foto = ultimafoto[ctx.guild.id][0].url               
+                    except KeyError:
+                        foto = ctx.author.avatar_url      
+            else:
+                foto = user.avatar_url
+            kak = img.new('RGBA',(1024,599))
+        
+            template = img.open('imgs/tristeza.png')
+            url = requests.get(url=foto)
+            foto = img.open(BytesIO(url.content))
+            foto = foto.resize((770,601))
+            foto = foto.copy()
+            kak.paste(foto,(344,0))
+            template = template.copy()
+            kak.paste(template,(0,0),template)
+            nome_do_arquivo=f"fire.png"
+            kak.save(nome_do_arquivo)
+            arq = discord.File(open(nome_do_arquivo,'rb'))#218 294
+            msg = await ctx.send(file=arq)
+    class News(commands.Cog):
+        @commands.command(name='news',aliases=['noticia','noticias'])
+        async def news(self,ctx,user: commands.Greedy[discord.Member]=None,*,message=f'Noticias CHOCANTES! O Servidor morreu por falta de membros'):
+            if user == None:
+                file = ctx.message.attachments
+                try:
+                    foto = file[0].url    
+                except IndexError:
+                    try:
+                        foto = ultimafoto[ctx.guild.id][0].url               
+                    except KeyError:
+                        foto = ctx.author.avatar_url
+    
+            else:
+                foto = user[0].avatar_url
+            kak = img.new('RGBA',(1024,599))
+        
+            template = img.open('imgs/news.png')
+            fonte = imgfont.truetype('cambriab.ttf', 30)
+            text = imgdraw.Draw(template)
+            message = textwrap.fill(message,50)
+            text.text((51,476),message,font=fonte,fill=(255,255,255)) #897 443
+            url = requests.get(url=ctx.guild.icon_url)
+            imgsv = img.open(BytesIO(url.content))
+            url = requests.get(url=foto)
+            foto = img.open(BytesIO(url.content))
+            foto = foto.resize((990,576))
+            foto = foto.copy()
+            imgsv = imgsv.resize((86,72))
+            imgsv = imgsv.copy()
+            template.paste(imgsv,(897,443))
+            kak.paste(foto,(0,0))
+            template = template.copy()
+            kak.paste(template,(0,0),template)
+            nome_do_arquivo=f"fire.png"
+            kak.save(nome_do_arquivo)
+            arq = discord.File(open(nome_do_arquivo,'rb'))#218 294
+            msg = await ctx.send(file=arq)
+        #51 476
     bot.add_cog(Ciencia(bot))     
     bot.add_cog(Dog(bot))
+    bot.add_cog(Art(bot))
+    bot.add_cog(Fogo(bot))
     bot.add_cog(Gato(bot))
-
+    bot.add_cog(Triste(bot))
+    bot.add_cog(News(bot))
+    #770 601,344,0
 bot.run(token.token())
