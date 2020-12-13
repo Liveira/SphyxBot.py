@@ -1,25 +1,27 @@
 import asyncio
+from io import BytesIO
 from random import randrange
 import time
+import requests
 import discord,json,datetime,random,os
+from PIL import Image as img
 from discord.ext import commands
 from discord.ext.commands.errors import RoleNotFound
 from discord.flags import Intents
 intents = intents = discord.Intents.all()
 log = ""
+ultimafoto=None
 def prefix(bot,message):
     with open("dados.json","r") as f:
 	    prefixo = json.load(f)
     return prefixo["Servers"][str(message.guild.id)]['config']['prefix']
 bot = commands.Bot(command_prefix=prefix,case_insensitive=True,intents=intents)
 bot.remove_command("help")
-#Variaveis
+epoch = datetime.datetime.utcfromtimestamp(0)
 class token():
     def token():
-        bottoken='Seu token'
+        bottoken='###'
         return bottoken
-epoch = datetime.datetime.utcfromtimestamp(0)
-#Funções
 @bot.event
 async def on_ready():
     await outroloop()
@@ -40,6 +42,8 @@ async def CConta(user: discord.Member):
     if str(user.id) in dados['Users']:
         return
     else:
+        if user.bot == True:
+            return
         dados['Users'][str(user.id)] = {'nome':user.name,'desc':'Usuario','rep':0,"xp_time":0}
         with open('users.json','w') as f:
             json.dump(dados,f,indent=4)
@@ -88,7 +92,6 @@ async def outroloop():
         channel = bot.get_channel(785611411043647578)
         await channel.send(file=file)
         log = ""
-# Eventos...
 class events(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
@@ -100,9 +103,14 @@ class events(commands.Cog):
         await loop()  
     @commands.Cog.listener()
     async def on_message(self,message):
-        
-        
+        try:
+            global ultimafoto
+            ultimafoto = message.attachments
+            print(ultimafoto)
+        except TypeError as error:
+            print(error)
         if message.author.bot != True:
+
             dados = await Dados()
             config = dados['Servers'][str(message.guild.id)]['config']
             if bot.user.mentioned_in(message):
@@ -178,12 +186,7 @@ class events(commands.Cog):
         mensagem = mensagem.replace('[guildname]',member.guild.name)
         channel = bot.get_channel(int(dados['Servers'][str(member.guild.id)]['config']['welcome_channel']))        
         await channel.send(mensagem)
-
 bot.add_cog(events(bot))
-
-# Comandos...
-
-# Moderação
 class Moderacao():
     class warn(commands.Cog):
         @commands.group(name='warn', invoke_without_command=True)
@@ -280,12 +283,15 @@ class Moderacao():
             if user == None:
                 await padrao(ctx,'Moderação','mute','Serve para mutar um usuario por um determinado tempo, caso não coloque nenhum tempo o tempo vai ser automaticamente inderteminado ou permanente','`mute <user>* <tempo> <motivo>` -> Silencia um membro\n`list <user>*`','```mute | silenciar | mutar```','Staff')
                 return
+            elif user.top_role >= ctx.author.top_role:
+                await ctx.send(":x: | **Seu cargo está abaixo do usuario**")
+                return
             dados = await Dados()
             time=0
             role=None
             ant = tempoMute
             if dados['Servers'][str(ctx.guild.id)]['config']['role_mute'] == 0:
-                await ctx.send(":x: | **Você não configurou o cargo de mute! Configure usando o comando** `config role-mute <cargo>`")
+                await ctx.send(":x: | **Você não configurou o cargo de mute! Configure usando o comando** `config mute-role <cargo>`")
             else:
                 role = ctx.guild.get_role(dados['Servers'][str(ctx.guild.id)]['config']['role_mute'])
             if tempoMute == None:
@@ -313,7 +319,6 @@ class Moderacao():
                 except IndexError:
                     pass
             if tempoMute == None:
-                print("cu")
                 await user.add_roles(role)
                 await ctx.send(f":question: | **O Usuario: {user.name} foi mutado por um tempo inderterminado, motivo: {motivo}**")
                 if dados['Servers'][str(ctx.guild.id)]['config']['dmpu'] == 1:
@@ -364,30 +369,57 @@ class Moderacao():
                     with open('dados.json','w') as f:
                         json.dump(dados,f,indent=4)
                     await ctx.send(":question: | **Mute editado com sucesso**")
+    class unmute(commands.Cog):
+        @commands.command(name='unmute',aliases=['desmutar'])
+        async def unmute(self,ctx,user: discord.Member=None):
+            if user == None:
+                await padrao(ctx,'Moderação','unmute','Serve para desmutar membros que já estão mutados','`unmute <user>*` -> desmuta o usuario`','```unmute | desmute```','Staff')
+            else:
+                dados = await Dados()
+                role = ctx.guild.get_role(dados['Servers'][str(ctx.guild.id)]['config']['role_mute'])
+                if role not in user.roles:
+                    await ctx.send(f":x: | **{user.name} não está mutado**")
+                    return
+                else:
+                    await user.remove_roles(role)
+                    await ctx.send(f":question: | **{user.name} foi desmutado")
     class ban(commands.Cog):
         @commands.command(name='ban',aliases=['banir'])
         @commands.has_permissions(ban_members=True)
-        async def ban(self,ctx,user:discord.Member=None,*,motivo='Não especificado'):
+        async def ban(self,ctx,user:discord.User=None,*,motivo='Não especificado'):
             if user == None:
                 await padrao(ctx,'Moderação','ban','Serve para banir membros','`ban <user>* <motivo>` -> bani um usuario do servidor','```ban | banir```','Staff')
+            elif user.top_role >= ctx.author.top_role:
+                await ctx.send(":x: | **Seu cargo está abaixo do usuario**")
+                return
             else:
                 dados = await Dados()
-                del dados['Servers'][str(ctx.guild.id)]['users'][str(user.id)]
+                try:
+                    del dados['Servers'][str(ctx.guild.id)]['users'][str(user.id)]
+                except KeyError:
+                    pass
                 if dados['Servers'][str(ctx.guild.id)]['config']['dmpu'] != 0:
                     await user.send(f":x: | **Você foi banido do servidor {ctx.guild.name}, motivo: {motivo}**")                
-                await user.ban(reason=motivo) 
+                await ctx.guild.ban(user,reason=motivo) 
                 with open('dados.json','w') as f:
                     json.dump(dados,f,indent=4)
+                await ctx.send(f":question: | **O Usuario {user.name} foi banido do servidor**")
     class unban(commands.Cog):
         @commands.command(name='unban',aliases=['desbanir'])
         @commands.has_permissions(ban_members=True)
-        async def unban(self,ctx,user: discord.Member=None):
+        async def unban(self,ctx,user: discord.User=None):
             if user == None:
-                await padrao(ctx,'Moderação','unban')
+                await padrao(ctx,'Moderação','unban','Serve para desbanir um usuario!','`unban <user>*` -> Desban em um usuario','```unban | desbanir```','Staff')
+            else:
+                dados = await Dados()
+                await ctx.guild.unban(user)
+                await ctx.send(f":question: | **O Usuario {user.name} foi desbanido**")
     bot.add_cog(warn(bot))
     bot.add_cog(unwarn(bot))
     bot.add_cog(mute(bot))
+    bot.add_cog(unmute(bot))
     bot.add_cog(ban(bot))
+    bot.add_cog(unban(bot))
 class Config(): 
     class config(commands.Cog):
         @commands.group(name='config',aliases=['cfg','configurar','cf'],invoke_without_command=True)
@@ -758,4 +790,48 @@ class RR():
                         role = user.guild.get_role(int(dados['Servers'][str(user.guild.id)]['config']['rr'][i]['role']))
                         await user.remove_roles(role)
     bot.add_cog(ReactionRoles(bot))
+class Diversao():
+    class Gato(commands.Cog):
+        @commands.command(name='gato',aliases=['cat','gatos','gatoaleatorio','randomcat'])
+        async def cat(self,ctx):
+            url = requests.get(url='https://aws.random.cat/meow')
+            js = url.json()
+            embed = discord.Embed(title='Gato Aleatorio')
+            embed.set_image(url=js['file'])
+            await ctx.send(embed=embed)
+    class Dog(commands.Cog):
+        @commands.command(name='cachorro',aliases=['dog','cachorros','cachorroaleatorio','randomdog'])
+        async def dog(self,ctx):
+            url = requests.get(url='https://dog.ceo/api/breeds/image/random')
+            js = url.json()
+            embed = discord.Embed(title='Cachorro Aleatorio')
+            embed.set_image(url=js['message'])
+            await ctx.send(embed=embed)
+    class Ciencia(commands.Cog):
+        @commands.command(name='ciencia',aliases=['acienciafoilongedemais','simounao'])
+        async def ciencia(self,ctx,file: discord.Attachment=None):
+            template = img.open('imgs/ciencia.jpg')
+                     if file == None:
+                try:
+                    url = ultimafoto[0].url
+                except IndexError:
+                    pass
+            else:
+                foto = file.url
+            url = requests.get(url=foto)
+            foto = img.open(BytesIO(url.content))
+            foto = foto.resize((906,495))
+            foto = foto.copy()
+            template.paste(foto,(0,122))
+            nome_do_arquivo=f"{randrange(0,10000)}.png"
+            template.save(nome_do_arquivo)
+            arq = discord.File(open(nome_do_arquivo,'rb'))
+            await ctx.send(file=arq)
+
+
+    #0,122
+    bot.add_cog(Ciencia(bot))     
+    bot.add_cog(Dog(bot))
+    bot.add_cog(Gato(bot))
+
 bot.run(token.token())
