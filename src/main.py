@@ -11,6 +11,7 @@ from PIL import ImageDraw as imgdraw
 from discord.ext import commands
 from discord.ext.commands.errors import RoleNotFound
 from discord.flags import Intents
+from dpymenus import Page, PaginatedMenu
 intents = intents = discord.Intents.all()
 log = ""
 ultimafoto={}
@@ -19,7 +20,6 @@ def prefix(bot,message):
 	    prefixo = json.load(f)
     return prefixo["Servers"][str(message.guild.id)]['config']['prefix']
 bot = commands.Bot(command_prefix=prefix,case_insensitive=True,intents=intents)
-bot.remove_command("help")
 epoch = datetime.datetime.utcfromtimestamp(0)
 class token():
     def token():
@@ -47,7 +47,7 @@ async def CConta(user: discord.Member):
     else:
         if user.bot == True:
             return
-        dados['Users'][str(user.id)] = {'nome':user.name,'desc':'Usuario','rep':0,"xp_time":0}
+        dados['Users'][str(user.id)] = {'nome':user.name,'desc':'Usuario','rep':0,"xp_time":0,'money':0,'gold':0,'inventory':{}}
         with open('users.json','w') as f:
             json.dump(dados,f,indent=4)
 async def GCConta(guild: discord.Guild):
@@ -95,6 +95,9 @@ async def outroloop():
         channel = bot.get_channel(785611411043647578)
         await channel.send(file=file)
         log = ""
+async def salvar(dados):
+    with open('users.json','w') as f:
+        json.dump(dados,f,indent=4)
 class events(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
@@ -939,7 +942,7 @@ class Diversao():
             kak = img.new('RGBA',(1024,599))
         
             template = img.open('imgs/news.png')
-            fonte = imgfont.truetype('cambriab.ttf', 30)
+            fonte = imgfont.truetype('cambriai.ttf', 30)
             text = imgdraw.Draw(template)
             message = textwrap.fill(message,50)
             text.text((51,476),message,font=fonte,fill=(255,255,255)) #897 443
@@ -967,5 +970,39 @@ class Diversao():
     bot.add_cog(Gato(bot))
     bot.add_cog(Triste(bot))
     bot.add_cog(News(bot))
-    #770 601,344,0
+class Economia():   
+    class Atm(commands.Cog):
+        @commands.command(name='atm',aliases=['money','coin','coins','dinheiro','meudinheiro','mymoney'])
+        async def atm(self,ctx,user: discord.Member=None):
+            user = user or ctx.author
+            dados = await UDados()
+            embed = discord.Embed(title=f'Conta bancaria de {user.name}',description=f'A Conta bancaria é o lugar onde tem informações de economia do usuario\n\nSeu dinheiro: **{dados["Users"][str(user.id)]["money"]}**\nSeus Gold Coins: **{dados["Users"][str(user.id)]["gold"]}**')
+            await ctx.send(embed=embed)
+    class Daily(commands.Cog):
+        @commands.command(name='daily',aliases=['diaria','day'])
+        @commands.cooldown(1,24000,commands.BucketType.member)
+        async def daily(self,ctx):
+            dados = await UDados()
+            rand = randrange(10,200)
+            dados['Users'][str(ctx.author.id)]['money'] += rand
+            await salvar(dados)
+            await ctx.send(f"Você ganhou {rand} moedas")
+        @commands.Cog.listener()
+        async def on_command_error(self,ctx,error):
+            if isinstance(error, commands.CommandOnCooldown):
+                await ctx.send(f":x: | ** Você precisa esperar {error.retry_after // 180} Horas para pegar o prêmio diario**")
+        ####################evento lá fodase on_commands error n se esqueça pau no anus
+    class TopMoney(commands.Cog):
+        @commands.command(name='topmoney',aliases=['rankdinheiro','rankcoin'])
+        async def top_money(self,ctx):
+            pages=[]
+            dic={}
+            lista=[]
+            dados = await UDados()
+            for i in dados['Users']:
+                user = await bot.get_user(int(i))
+                dic[i['money']] = user.name
+                lista.append(i['money'])
+    bot.add_cog(Daily(bot))
+    bot.add_cog(Atm(bot))
 bot.run(token.token())
