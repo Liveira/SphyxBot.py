@@ -15,6 +15,7 @@ from dpymenus import Page, PaginatedMenu
 intents = intents = discord.Intents.all()
 log = ""
 ultimafoto={}
+vargv={}
 def prefix(bot,message):
     with open("dados.json","r") as f:
 	    prefixo = json.load(f)
@@ -122,13 +123,14 @@ class events(commands.Cog):
         if message.author.bot != True:
 
             dados = await Dados()
+            dadosU = await UDados()
             config = dados['Servers'][str(message.guild.id)]['config']
             if  message.content == f"<@!{bot.user.id}>":
                 await message.channel.send(f":question: | `{config['prefix']}help` **<- Comando de ajuda**")
             xp = dados['Servers'][str(message.guild.id)]['users'][str(message.author.id)]['xp']
             dados['Servers'][str(message.guild.id)]['users'][str(message.author.id)]['msg'] += 1
             user = message.author
-            if user.id in dados:
+            if user.id in dadosU:
                 pass
             else:
                 await CConta(user)
@@ -752,7 +754,7 @@ class RR():
     class ReactionRoles(commands.Cog):
         @commands.group(name='rr',aliases=['reactionroles'],invoke_without_command=True) 
         @commands.has_permissions(kick_members=True)
-        async def rr(self,ctx,channelA: discord.TextChannel=None,message_id=None,emoji: discord.PartialEmoji=None,cargo: discord.Role=None):
+        async def rr(self,ctx,channelA: discord.TextChannel=None,message_id=None,emoji=None,cargo: discord.Role=None):
             if channelA == None:
                 await padrao(ctx,'Moderação','ReactionRoles','ReactionRoles (RR) É um sistema de reação por cargos, você reagir em um emoji e ganha um cargo que a staff decidir','`rr <id da mensagem> <emoji> <cargo>`','```rr | reactionroles```','Staff')         
             else:
@@ -761,11 +763,19 @@ class RR():
                 dados = await Dados()
                 dados['Servers'][str(ctx.guild.id)]['config']['rrcont'] += 1
                 cont = dados['Servers'][str(ctx.guild.id)]['config']['rrcont']
-                dados['Servers'][str(ctx.guild.id)]['config']['rr'][str(cont)] = {
+                try:
+                    emoji = await bot.get_emoji(int(emoji))    
+                    dados['Servers'][str(ctx.guild.id)]['config']['rr'][str(cont)] = {
                     'emoji':str(emoji.id),
                     'role':str(cargo.id),
                     'msg':str(message_id)
                 }
+                except ValueError:
+                    dados['Servers'][str(ctx.guild.id)]['config']['rr'][str(cont)] = {
+                    'emoji':str(emoji),
+                    'role':str(cargo.id),
+                    'msg':str(message_id)
+                    }
                 with open("dados.json",'w') as f:
                     json.dump(dados,f,indent=4)
                 await msg.add_reaction(emoji)
@@ -779,8 +789,14 @@ class RR():
             dados = await Dados()
             for i in dados['Servers'][str(user.guild.id)]['config']['rr']:
                 if str(message.id) in dados['Servers'][str(user.guild.id)]['config']['rr'][i]['msg']:
-                    emoji = await user.guild.fetch_emoji(int(dados['Servers'][str(user.guild.id)]['config']['rr'][i]['emoji']))
+                    try:
+                        emoji = await user.guild.fetch_emoji(int(dados['Servers'][str(user.guild.id)]['config']['rr'][i]['emoji']))
+                    except ValueError:
+                        emoji = dados['Servers'][str(user.guild.id)]['config']['rr'][i]['emoji']
+                    print(emojiA)
+                    print(emoji)
                     if emojiA == emoji:
+                        print("a")
                         role = user.guild.get_role(int(dados['Servers'][str(user.guild.id)]['config']['rr'][i]['role']))
                         await user.add_roles(role)
         @commands.Cog.listener()
@@ -792,7 +808,10 @@ class RR():
             dados = await Dados()
             for i in dados['Servers'][str(user.guild.id)]['config']['rr']:
                 if str(message.id) in dados['Servers'][str(user.guild.id)]['config']['rr'][i]['msg']:
-                    emoji = await user.guild.fetch_emoji(int(dados['Servers'][str(user.guild.id)]['config']['rr'][i]['emoji']))
+                    try:
+                        emoji = await user.guild.fetch_emoji(int(dados['Servers'][str(user.guild.id)]['config']['rr'][i]['emoji']))
+                    except ValueError:
+                        emoji = dados['Servers'][str(user.guild.id)]['config']['rr'][i]['emoji']
                     if emojiA == emoji:
                         role = user.guild.get_role(int(dados['Servers'][str(user.guild.id)]['config']['rr'][i]['role']))
                         await user.remove_roles(role)
@@ -942,7 +961,7 @@ class Diversao():
             kak = img.new('RGBA',(1024,599))
         
             template = img.open('imgs/news.png')
-            fonte = imgfont.truetype('cambriai.ttf', 30)
+            fonte = imgfont.truetype('cambriaz.ttf', 30)
             text = imgdraw.Draw(template)
             message = textwrap.fill(message,50)
             text.text((51,476),message,font=fonte,fill=(255,255,255)) #897 443
@@ -986,23 +1005,119 @@ class Economia():
             rand = randrange(10,200)
             dados['Users'][str(ctx.author.id)]['money'] += rand
             await salvar(dados)
-            await ctx.send(f"Você ganhou {rand} moedas")
-        @commands.Cog.listener()
+            embed = discord.Embed(title=f'Recompensa diaria de {ctx.author.name}',description=f'Você pegou sua recompensa diaria de hoje, para pegar a proxima pegue no proxima dia\n\nVocê ganhou {rand} moedas!')
+            embed.set_thumbnail(url='https://media.discordapp.net/attachments/765971397524062220/788833032382840882/gift.png')
+            await ctx.send(embed=embed)
+        '''@commands.Cog.listener()
         async def on_command_error(self,ctx,error):
             if isinstance(error, commands.CommandOnCooldown):
                 await ctx.send(f":x: | ** Você precisa esperar {error.retry_after // 180} Horas para pegar o prêmio diario**")
+            else:
+                await ctx.send(error)'''
         ####################evento lá fodase on_commands error n se esqueça pau no anus
     class TopMoney(commands.Cog):
         @commands.command(name='topmoney',aliases=['rankdinheiro','rankcoin'])
-        async def top_money(self,ctx):
+        async def top_money(self,ctx,index:int=1):
+            print(index*10)
             pages=[]
             dic={}
             lista=[]
+            msg=""
+            isa=0
             dados = await UDados()
             for i in dados['Users']:
-                user = await bot.get_user(int(i))
-                dic[i['money']] = user.name
-                lista.append(i['money'])
+                user = bot.get_user(int(i))
+                dic[dados['Users'][i]['money']] = user.name
+                lista.append(dados['Users'][i]['money'])
+            lista = sorted(lista,reverse=True)
+            for g in lista:
+                if g == 0:
+                    await ctx.send(msg)
+                    break
+                isa += 1
+                if isa >= index*10-10:
+                    try:
+                        msg = msg +'\n'+ dic[g] + ' - ' + str(g) + 'cs'
+                    except IndexError:
+                        await ctx.send(msg)
+                elif isa >= index*10:
+                    await ctx.send(msg)
+                    return
+    class Pay(commands.Cog):
+        @commands.command(name='pay',aliases=['pagar'])
+        async def pay(self,ctx,user:discord.Member=None,dinheiro:int=1):
+            if user == None:
+                await ctx.send(":x: | **Você precisa informar um membro**")
+            elif user.id == ctx.author.id:
+                await ctx.send(":x: | **Você não pode se pagar**")
+            elif dinheiro <= 0:
+                await ctx.send(":x: | **Você precisa dar um numero maior que 0**")
+            else:
+                dados = await UDados()
+                if dinheiro > dados['Users'][str(ctx.author.id)]['money']:
+                    await ctx.send(":x: | **Você não pode pagar essa quantidade**")
+                else:
+                    dados['Users'][str(ctx.author.id)]['money'] -= dinheiro
+                    dados['Users'][str(user.id)]['money'] += dinheiro
+                    await salvar(dados)
+                    await ctx.send(f":question: | **Você deu {dinheiro}cs para {user.name}**")
+    class Giveway(commands.Cog):        
+        @commands.command(name='giveway',aliases=['sorteio','sortear'])
+        async def giveway(self,ctx,horario=None,num: int=1,*,message:str='Sorteio'):
+            if horario == None:
+                await ctx.send(":x: | **Informe o tempo do sorteio e a mensagem**")
+            else:
+                embed = discord.Embed(title='Sorteio',description=f'\n{message}**\nNumero de ganhadores {num}\nTempo de sorteio {horario}**')
+                msg = await ctx.send(embed=embed)
+                horario = horario.lower()
+                await msg.add_reaction('🎉')
+                global vargv
+                vargv[str(ctx.guild.id)] = {msg.id:{"time":horario,'ganhadores':num,'gar':[]}}   
+                if horario[1] == 'm' or horario[2] == 'm':
+                    horario = horario.replace('m','')
+                    time=int(horario)
+                    time = time * 60
+                elif horario[1] == 'h' or horario[2] == 'h':
+                    horario = horario.replace('h','')
+                    time=int(horario)
+                    time = time * 60 * 60
+                elif horario[1] == 'd' or horario[2] == 'd':
+                    horario = horario.replace('d','')
+                    time=int(horario)
+                    time = time * 60 * 60 * 60
+                elif horario[1] == 's' or horario[2] == 's':
+                    horario = horario.replace('s','')
+                    time = int(horario)
+                else:
+                    await ctx.send("Formatos de horarios disponiveis [s/m/h/d]")
+                    return
+                await asyncio.sleep(time)
+                msgA=''
+                lk=[]
+                krek=[]
+                for i in range(num):
+                    lk.append(random.choice(vargv[str(ctx.guild.id)][msg.id]['gar']))
+                    user = ctx.guild.get_member(lk[i])
+                    while user in krek:
+                        lk.append(random.choice(vargv[str(ctx.guild.id)][msg.id]['gar']))
+                        user = ctx.guild.get_member(lk[i])
+                    msgA = msgA + user.mention + ','
+                    krek.append(user)
+                await ctx.send(f" 🎉 {msgA} Ganhou o sorteio!")                
+        @commands.Cog.listener()
+        async def on_reaction_add(self,reaction,user):
+            global vargv
+            if user.bot == True:
+                return
+            if reaction.emoji == '🎉':
+                if str(reaction.message.guild.id) in vargv:
+                    print(reaction.message.id)
+                    print(vargv[str(reaction.message.guild.id)])
+                    if reaction.message.id in vargv[str(reaction.message.guild.id)]:
+                        vargv[str(reaction.message.guild.id)][reaction.message.id]['gar'].append(user.id)                        
+    bot.add_cog(TopMoney(bot))
+    bot.add_cog(Giveway(bot))
+    bot.add_cog(Pay(bot))
     bot.add_cog(Daily(bot))
     bot.add_cog(Atm(bot))
 bot.run(token.token())
