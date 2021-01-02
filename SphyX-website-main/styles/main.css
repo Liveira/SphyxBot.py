@@ -1,0 +1,172 @@
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300&display=swap');
+
+* {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    text-decoration: none;
+    color: white;
+}
+html {
+    height: 100%;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-image: url(https://w.wallhaven.cc/full/6q/wallhaven-6qx916.png);
+    transition: all 1s;
+    font-family: "Rubik";
+
+}
+
+nav {
+    background-color: #2874A6;
+    height: 90px;
+    width: 100%;
+    font-family: "Russo One", sans-serif;
+
+}
+li {
+    display: inline-block;
+}
+nav ul {
+    float: right;
+    margin-right: 30px;
+}
+nav ul li {
+    display: inline-block;
+    margin: 0 5px;
+    line-height: 90px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    transition: 0.3s;
+    font-size: 20pt;
+
+}
+nav ul li a:hover {
+    color: aquamarine;
+    text-decoration: none;
+    font-size: xx-large;
+
+}
+nav > img {
+    width: 90px;
+    height: 90px;
+    float: left;
+    margin-left: 20px;
+    border-radius: 100%;
+
+}
+
+i {
+    color: white;
+}
+
+nav label {
+    color: white;
+    float: left;
+    line-height: 90px;
+    padding: 0 100px;
+    font-size: 40pt;
+}
+
+.checkbutton {
+    float: right;
+    line-height: 90px;
+    cursor: pointer;    
+    display: none;
+}
+
+
+#check {
+    display: none;
+}
+
+
+.title {
+    margin: 50%;
+}
+
+iframe {
+    align-items: right;
+}
+
+
+.selected {
+    text-decoration: underline;
+}
+
+.list-group-item {
+    color: black !important;
+}
+
+/* mediano */
+@media (max-width: 1323px) {
+    nav > img {
+        width: 70px;
+        height: 70px;
+        float: left;
+        padding-top: 0px;
+    }
+    nav {
+        background-color: #2874A6;
+        height: 70px;
+        width: 100%;
+    }
+    nav label {
+        line-height: 70px;
+    }
+    nav ul li {
+        /* display: inline-block; */
+        line-height: 70px;
+    }
+    .checkbutton {
+        float: right;
+        line-height: 70px;
+        cursor: pointer;    
+        display: none;
+    }
+}
+/* pequeno */
+
+@media (max-width: 1350px) {
+    .checkbutton {
+        display: block;
+    }
+    nav ul {
+        position: fixed;
+        width: 50%;
+        height: 100vh;
+        top: 70px;
+        left: 100%;
+        text-align: center;
+        background-color: #2874A6;
+        transition: .5s all;
+    }
+
+    nav ul li {
+        display: block;
+    }
+    nav ul li {
+        display: block;
+    }
+    #check:checked ~ ul {
+        left: 50%;
+    }
+    .name {
+        display: none;
+    }
+}
+
+
+/* 
+Made with the help of the tutorial:
+https://www.youtube.com/watch?v=oLgtucwjVII
+*/
+
+
