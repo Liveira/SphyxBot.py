@@ -18,3 +18,5 @@ Sim, o bot é Open Source mas ainda sim você precisar dar os creditos
 - E Bot totalmente configuravel
 
 
+[![Discord Bots](https://top.gg/api/widget/782737686238461952.svg)](https://top.gg/bot/782737686238461952)
+
