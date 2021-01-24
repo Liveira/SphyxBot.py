@@ -81,7 +81,7 @@ def prefix(bot,message):
     for i in x:
         lis.append(i)
     return commands.when_mentioned_or(*lis[0]['prefix'])(bot, message)
-bot = commands.AutoShardedBot(command_prefix='b!',case_insensitive=True,intents=intents)
+bot = commands.AutoShardedBot(command_prefix=prefix,case_insensitive=True,intents=intents)
 bot.remove_command('help')
 epoch = datetime.datetime.utcfromtimestamp(0)
 @tasks.loop(seconds=30)
@@ -2826,4 +2826,4 @@ class EventLog(commands.Cog):
         except:
             await ctx.reply(":x: | **Você não ativou o event log, para ativar use `.eventlog`**")
 bot.add_cog(EventLog(bot))
-bot.run(config['token2'])
+bot.run(config['token'])
