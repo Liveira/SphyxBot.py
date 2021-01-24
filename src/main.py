@@ -219,7 +219,6 @@ def blacklists():
                 return False
             else:
                 return True
-
         except Exception as ex: 
             return True
     return commands.check(checar)
