@@ -31,7 +31,7 @@ from PIL import ImageFont as imgfont
 from PIL import ImageDraw as imgdraw
 from PIL import ImageOps
 from discord.ext import commands,tasks
-from discord.ext.commands.errors import BotMissingPermissions, ChannelNotFound, ChannelNotReadable, CommandInvokeError, CommandNotFound, CommandOnCooldown, EmojiNotFound, MemberNotFound, MissingPermissions, RoleNotFound, UserNotFound
+from discord.ext.commands.errors import BotMissingPermissions, ChannelNotFound, ChannelNotReadable, CheckFailure, CommandInvokeError, CommandNotFound, CommandOnCooldown, EmojiNotFound, MemberNotFound, MissingPermissions, RoleNotFound, UserNotFound
 from discord.flags import Intents
 from dpymenus import Page, PaginatedMenu
 from requests.api import request
@@ -216,11 +216,16 @@ def blacklists():
     def checar(ctx):
         try:
             if blacklist.find({"_id":id})[0]['blacklisted'] == True:
-                return True
-            else:
+                print('YEah')
                 return False
+            else:
+                print('YEah d')
+                return True
+
         except Exception as ex:
-            return False
+            print('YEahdsa')    
+            return True
+            
     return commands.check(checar)
 def blackli(id:int, temp:int):
     blacklist.insert_one({'_id':id, "blacklisted":True,"time":datetime.datetime.now() + delt(seconds=temp)})
@@ -468,6 +473,8 @@ class events(commands.Cog):
             return
         elif isinstance(error, EmojiNotFound):
             await ctx.reply(":x: | **Eu não encontrei esse emoji")
+        elif isinstance(error, CheckFailure):
+            return
         else:
             await ctx.send(f":x: | **Aconteceu um erro inesperado...** ```{error.args}```Você pode reportar esse erro no servidor de suporte...")
 bot.add_cog(events(bot))
