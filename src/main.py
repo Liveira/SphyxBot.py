@@ -1846,7 +1846,7 @@ class Diversao():
                 result += int(match.group(3))
                 lis.append(f'+ {match.group(3)}')
             await ctx.reply(f":question: | **Aqui o resultado {result}** | {lis}")
-    class lol(commands.Cog):
+    '''class lol(commands.Cog):
         @commands.command()
         @commands.before_invoke(usou)
         @commands.cooldown(1,120,commands.BucketType.guild)
@@ -1870,9 +1870,9 @@ class Diversao():
                 sb.save_video('lol.mp4')
                 arq = discord.File(open('lol.mp4','rb'))
             await ctx.reply(file=arq)
-            discord.utils.get('poetico', bot.emojis)
+            discord.utils.get('poetico', bot.emojis)'''
     bot.add_cog(Anime(bot))
-    bot.add_cog(lol(bot))
+    #bot.add_cog(lol(bot))
     bot.add_cog(dados(bot))
     bot.add_cog(calendario(bot))
     bot.add_cog(servericon(bot))
