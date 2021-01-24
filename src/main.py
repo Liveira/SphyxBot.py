@@ -461,15 +461,17 @@ class events(commands.Cog):
                 colDown[ctx.author.id][ctx.command.name]['vz'] += 1
                 error.cooldown.per += 10
             if error.cooldown.per >= 50:
-                await ctx.send(":x: | **Sua conta foi banida por quebrar as regras do SphyX**\n**Motivo:** Flood de CMDs\n**Duração:** 3 Dias...")
-                blackli(ctx.author.id,648000)
+                try:
+                    blackli(ctx.author.id,648000)
+                    await ctx.send(":x: | **Sua conta foi banida por quebrar as regras do SphyX**\n**Motivo:** Flood de CMDs\n**Duração:** 3 Dias...")
+                except:return
             else:await ctx.send(f":x: | **Espere {int(error.retry_after)} segundos para usar o comando novamente**")
         elif isinstance(error, CommandNotFound):
-            print("A")
+            return
         elif isinstance(error, EmojiNotFound):
             await ctx.send(":x: | **Eu não encontrei esse emoji")
         elif isinstance(error, CheckFailure):
-            print("A")
+            return
         else:
             await ctx.send(f":x: | **Aconteceu um erro inesperado...** ```{error.args}```Você pode reportar esse erro no servidor de suporte...")
 bot.add_cog(events(bot))
@@ -1663,7 +1665,6 @@ class Diversao():
                         foto = ultimafoto[ctx.guild.id][0].url               
                     except KeyError:
                         foto = ctx.author.avatar_url
-    
             else:
                 foto = user[0].avatar_url
             async with ctx.channel.typing():   
