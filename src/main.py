@@ -88,7 +88,7 @@ def prefix(bot,message):
     lis=[]
     for i in x:
         lis.append(i)
-    return commands.when_mentioned_or(*lis[0]['prefix'])(bot, message)
+    return lis[0]['prefix']
 bot = commands.AutoShardedBot(command_prefix=prefix,case_insensitive=True,intents=intents)
 bot.remove_command('help')
 epoch = datetime.datetime.utcfromtimestamp(0)
@@ -117,7 +117,7 @@ async def padrao(ctx: object,nomeEmbed: str,name: str,desc: str,como: str,aliase
         embed = discord.Embed(title=f'Ajuda de {nomeEmbed}',description=f'Esse painel mostrara como usar o {name}, somente a Staff podem usar esse comando\n\n :question:  **Para que serve?**\n\n {desc}\n\n\n :question: **Quais são os comandos?**\n\n {como} \n\n** :globe_with_meridians: Outros nomes**\n {aliases}')
     else:
         embed = discord.Embed(title=f'Ajuda de {nomeEmbed}',description=f'Esse painel mostrara como usar o {name}, todos podem usar esse comando\n\n :question:  **Para que serve?**\n\n {desc}\n\n\n :question: **Quais são os comandos?**\n\n {como} \n\n** :globe_with_meridians: Outros nomes**\n {aliases}')
-    await ctx.reply(embed=embed)
+    await ctx.send(embed=embed)
 async def salvar(dados,id):
     sets = {"$set":dados}
     users.update_one(users.find_one({"_id":id}),sets)
@@ -438,39 +438,38 @@ class events(commands.Cog):
     async def on_command_error(self,ctx,error):
         if await bl(ctx.author.id) == True:return
         elif isinstance(error, MissingPermissions):
-            await ctx.reply(':x: | **Você não tem permissão para fazer isso...**')
+            await ctx.send(':x: | **Você não tem permissão para fazer isso...**')
         elif isinstance(error, MemberNotFound):
-            await ctx.reply(":x: | **Eu não consegui achar esse membro.**")
+            await ctx.send(":x: | **Eu não consegui achar esse membro.**")
         elif isinstance(error, ChannelNotFound):
-            await ctx.reply(":x: | **Não consegui encontrar esse canal...**")
+            await ctx.send(":x: | **Não consegui encontrar esse canal...**")
         elif isinstance(error, UserNotFound):
-            await ctx.reply(":x: | **Eu não consegui encontrar essa pessoa**")
+            await ctx.send(":x: | **Eu não consegui encontrar essa pessoa**")
         elif isinstance(error, ChannelNotReadable):
-            await ctx.reply(":x: | **Não consigo mandar mensagens no canal!**")
+            await ctx.send(":x: | **Não consigo mandar mensagens no canal!**")
         elif isinstance(error, BotMissingPermissions):
-            await ctx.reply(":x: | **Eu não tenho permissões para fazer isso...**")
+            await ctx.send(":x: | **Eu não tenho permissões para fazer isso...**")
         elif isinstance(error, CommandOnCooldown):
+            
             if ctx.command.name == 'daily':return
             elif ctx.author.id not in colDown:
                 colDown[ctx.author.id] = {ctx.command.name:{'es':datetime.datetime.now() + delt(seconds=error.retry_after),'vz':0}}
             else:
+                if ctx.command.name not in colDown[ctx.author.id]:
+                    colDown[ctx.author.id][ctx.command.name] = {'es':datetime.datetime.now() + delt(seconds=error.retry_after),'vz':0} 
+
                 colDown[ctx.author.id][ctx.command.name]['vz'] += 1
                 error.cooldown.per += 10
-                if colDown[ctx.author.id][ctx.command.name]['vz'] == 3:
-                    await ctx.send(f":x: | **É melhor você parar... {int(error.retry_after)} segundos para o cooldown terminar** | 1 Tentativa restante")
-                    return
-                elif colDown[ctx.author.id][ctx.command.name]['vz'] == 4:
-                    await ctx.send(f":x: | **Você pediu... Sua conta foi banida de usar o SphyX por 3 Dias...**")
-                    blackli(ctx.author.id,648000) #
-                    return
-                if colDown[ctx.author.id][ctx.command.name]['vz'] == 2:await ctx.send(f":x: | **Não fique usando comandos no cooldown, agora espere {int(error.retry_after)} segundos pra usar denovo** | 2 Tentativas restantes")
-                else: await ctx.send(f":x: | **Espere {int(error.retry_after)} segundos para você usar o comando novamente**")
+            if error.cooldown.per >= 50:
+                await ctx.send(":x: | **Sua conta foi banida por quebrar as regras do SphyX**\n**Motivo:** Flood de CMDs\n**Duração:** 3 Dias...")
+                blackli(ctx.author.id,648000)
+            else:await ctx.send(f":x: | **Espere {int(error.retry_after)} segundos para usar o comando novamente**")
         elif isinstance(error, CommandNotFound):
-            return
+            print("A")
         elif isinstance(error, EmojiNotFound):
-            await ctx.reply(":x: | **Eu não encontrei esse emoji")
+            await ctx.send(":x: | **Eu não encontrei esse emoji")
         elif isinstance(error, CheckFailure):
-            return
+            print("A")
         else:
             await ctx.send(f":x: | **Aconteceu um erro inesperado...** ```{error.args}```Você pode reportar esse erro no servidor de suporte...")
 bot.add_cog(events(bot))
@@ -486,10 +485,10 @@ class Moderacao():
             elif user == None:
                 await padrao(ctx,'Moderação','warn','Serve para avisar membros, quando se usa em uma pessoa, é registrado +1 warn nos registro do usuario','`warn <user>* <motivo>` -> Serve para avisar o usuario\n`list <user>*` -> Serve para ver o registro de warns, motivo, e quem deu warn\n`edit <user> <motivo>` -> Serve para alterar o motivo do warn','```warn | avisar```','Staff')
             elif user.id == ctx.author.id:
-                await ctx.reply(":x: | **Você não pode se \"Auto avisar\"**")
+                await ctx.send(":x: | **Você não pode se \"Auto avisar\"**")
                 return
             elif user.top_role >= ctx.author.top_role:
-                await ctx.reply(":x: | **Seu cargo está abaixo do usuario**")
+                await ctx.send(":x: | **Seu cargo está abaixo do usuario**")
                 return
             else:
                 dados = await Dados(ctx.guild.id)
@@ -504,7 +503,7 @@ class Moderacao():
                     "Staff":ctx.author.name
                 }
                 await salvarS(dados,ctx.guild.id)
-                await ctx.reply(f'{user.name} Levou warn, motivo: {Motivo}, Já é o {cont}° Warn que ele já tem')
+                await ctx.send(f'{user.name} Levou warn, motivo: {Motivo}, Já é o {cont}° Warn que ele já tem')
                 if dados['config']['dmpu'] == 0:
                     pass
                 else:
@@ -523,9 +522,9 @@ class Moderacao():
                     for i in dados['users'][str(user.id)]['ficha']:
                         msg = msg + '\n' + str(dados['users'][str(user.id)]['ficha'][str(i)]['ID']) + ' - ' + dados['users'][str(user.id)]['ficha'][i]['Motivo'] + ' - ' + dados['users'][str(user.id)]['ficha'][i]['Staff']
                     embed = discord.Embed(title=f'Ficha de {user.name}',description='```INDEX|MOTIVO|STAFF\n'+msg+'\n```')
-                    await ctx.reply(embed=embed)
+                    await ctx.send(embed=embed)
                 except KeyError:
-                    await ctx.reply(":x: | **Esse usuario nunca teve um aviso**")
+                    await ctx.send(":x: | **Esse usuario nunca teve um aviso**")
         @cmdwarn.command(name='edit',aliases=['editar'])
         @commands.has_permissions(kick_members=True)
         @commands.cooldown(1,5,commands.BucketType.member)
@@ -536,13 +535,13 @@ class Moderacao():
                 dados = await Dados(ctx.guild.id)
                 try:
                     if index == None or index not in dados['ficha']:
-                        await ctx.reply(":x: | **Index inválida, para saber as index válidas use o `warn list <member>`**")
+                        await ctx.send(":x: | **Index inválida, para saber as index válidas use o `warn list <member>`**")
                     else:
                         dados['ficha'][index]['Motivo'] = novomotivo
                         await salvarS(dados,ctx.guild.id)
-                        await ctx.reply(":question: | **Warn editado com sucesso**")
+                        await ctx.send(":question: | **Warn editado com sucesso**")
                 except KeyError:
-                    await ctx.reply(":x: | **Esse usuario nunca teve um aviso**")
+                    await ctx.send(":x: | **Esse usuario nunca teve um aviso**")
         @cmdwarn.command(name='all')
         @commands.has_permissions(kick_members=True)
         @commands.cooldown(1,5,commands.BucketType.member)
@@ -563,7 +562,7 @@ class Moderacao():
             lista = sorted(lista,reverse=True)
             for i in lista:
                 msg = msg + '\n' + do[i] + ' - ' + str(i)      
-            await ctx.reply(embed=discord.Embed(title='Lista de avisos',description=f'```{msg if msg != "" else "A Lista de avisos está vazia..."}```'))
+            await ctx.send(embed=discord.Embed(title='Lista de avisos',description=f'```{msg if msg != "" else "A Lista de avisos está vazia..."}```'))
     class unwarn(commands.Cog):
         @commands.command(name='unwarn',aliases=['desavisar'])
         @commands.has_permissions(kick_members=True)
@@ -575,16 +574,16 @@ class Moderacao():
             if user == None:
                 await padrao(ctx,'Moderação','unwarn','Serve para remover o warn de um membro','`unwarn <user> <index> <motivo>','```unwarn | desavisar ```','Staff')
             elif user.id == ctx.author.id:
-                    await ctx.reply(":x: | **Você não pode tirar o seu próprio aviso**")
+                    await ctx.send(":x: | **Você não pode tirar o seu próprio aviso**")
                     return
             elif user.top_role >= ctx.author.top_role:
-                await ctx.reply(":x: | **Seu cargo está abaixo do usuario**")
+                await ctx.send(":x: | **Seu cargo está abaixo do usuario**")
                 return
             else:
                 try:
                     dados = await Dados(ctx.guild.id)
                     if dados['warns'] == 0:
-                        await ctx.reply(":x: | **O Usuario não tem avisos**")
+                        await ctx.send(":x: | **O Usuario não tem avisos**")
                         return
                     else:
                         dados['warns'] -= 1
@@ -592,13 +591,13 @@ class Moderacao():
                             index = dados['warns']
                         del dados['ficha'][str(index)]
                         await salvarS(dados,ctx.guild.id)
-                        await ctx.reply(f":question: | **O Aviso do usuario {user.name} foi removido!**")
+                        await ctx.send(f":question: | **O Aviso do usuario {user.name} foi removido!**")
                         if dados['config']['dmpu'] == 1:
                             await user.send(":warning: | **Seu aviso foi removido**")  
                         global log
                         log = log + '\n' + f'{user.name} warn retirado no servidor {ctx.guild.name}'
                 except KeyError:
-                    await ctx.reply(':x: | **Esse usuario não tem avisos**')             
+                    await ctx.send(':x: | **Esse usuario não tem avisos**')             
     class kick(commands.Cog):
         @commands.command(name='kick',aliases=['expulsar'])
         @commands.has_permissions(kick_members=True)
@@ -615,7 +614,7 @@ class Moderacao():
                 if dados['config']['dmpu'] != 0:
                     await member.send(f":x: | **Você foi expulso do servidor {ctx.guild.name}, motivo: {motivo}**")                
                 await ctx.guild.ban(member,reason=motivo)      
-                await ctx.reply(f":question: | **O Usuario {member.name} foi expulso do servidor**")
+                await ctx.send(f":question: | **O Usuario {member.name} foi expulso do servidor**")
     class mute(commands.Cog):
         @commands.group(name='mute',aliases=['mutar','silenciar','tempmute'], invoke_without_command=True)
         @commands.has_permissions(kick_members=True)
@@ -628,14 +627,14 @@ class Moderacao():
                 await padrao(ctx,'Moderação','mute','Serve para mutar um usuario por um determinado tempo, caso não coloque nenhum tempo o tempo vai ser automaticamente inderteminado ou permanente','`mute <user>* <tempo> <motivo>` -> Silencia um membro\n`list <user>*`','```mute | silenciar | mutar```','Staff')
                 return
             elif user.top_role >= ctx.author.top_role:
-                await ctx.reply(":x: | **Seu cargo está abaixo do usuario**")
+                await ctx.send(":x: | **Seu cargo está abaixo do usuario**")
                 return
             dados = await Dados(ctx.guild.id)
             time=1
             role=None
             ant = tempoMute
             if dados['config']['role_mute'] == 0:
-                await ctx.reply(":x: | **Você não configurou o cargo de mute! Configure usando o comando** `config mute-role <cargo>`")
+                await ctx.send(":x: | **Você não configurou o cargo de mute! Configure usando o comando** `config mute-role <cargo>`")
                 return
             else:
                 role = ctx.guild.get_role(dados['config']['role_mute'])
@@ -655,18 +654,18 @@ class Moderacao():
                     tempoMute = None
             if tempoMute == None:
                 await user.add_roles(role)
-                await ctx.reply(f":question: | **O Usuario: {user.name} foi mutado por um tempo inderterminado, motivo: {motivo}**")
+                await ctx.send(f":question: | **O Usuario: {user.name} foi mutado por um tempo inderterminado, motivo: {motivo}**")
                 if dados['config']['dmpu'] == 1:
                     try:await user.send(f"Você está **Mutado** por tempo inderteminado, motivo: {motivo}")                        
-                    except:await ctx.reply(":x: | Erro ao mandar mensagem na DM: **DM Bloqueada**")           
+                    except:await ctx.send(":x: | Erro ao mandar mensagem na DM: **DM Bloqueada**")           
             else:
                 await user.add_roles(role)
                 cont=0 
-                await ctx.reply(f":question: | **O Usuario: {user.name} foi mutado por {ant}, motivo: {motivo}**")
+                await ctx.send(f":question: | **O Usuario: {user.name} foi mutado por {ant}, motivo: {motivo}**")
                 print(time)
                 if dados['config']['dmpu'] == 1:
                         try:await user.send(f"Você está **Mutado** por {ant}, motivo: {motivo}")
-                        except:await ctx.reply(":x: | Erro ao mandar mensagem na DM: **DM Bloqueada**")
+                        except:await ctx.send(":x: | Erro ao mandar mensagem na DM: **DM Bloqueada**")
             if user.id not in dados['users']:
                 dados['users'][str(user.id)] = {'warns':0,'ficha':{},'fichamute':{},'contmute':0,'mute':{}}
             dados['users'][str(user.id)]['contmute'] += 1
@@ -704,7 +703,7 @@ class Moderacao():
                 for i in dados['fichamute']:
                     msg = msg + '\n' + str(dados['users'][str(user.id)]['fichamute'][i]['ID']) + ' - ' + dados['users'][str(user.id)]['fichamute'][i]['Motivo'] + ' - ' +dados['users'][str(user.id)]['fichamute'][i]['tempo']+'  -  '+ dados['fichamute'][i]['Staff']
                 embed = discord.Embed(title=f'Ficha de {user.name}',description='```INDEX|MOTIVO|TEMPO|STAFF\n'+msg+'\n```')
-                await ctx.reply(embed=embed)           
+                await ctx.send(embed=embed)           
         @cmdmute.command(name='edit',aliases=['editar'])
         @commands.has_permissions(kick_members=True)
         @commands.cooldown(1,5,commands.BucketType.member)
@@ -714,11 +713,11 @@ class Moderacao():
             else:
                 dados = await Dados(ctx.guild.id)
                 if index == None or index not in dados['fichamute']:
-                    await ctx.reply(":x: | **Index inválida, para saber as index válidas use o `mute list <member>`**")
+                    await ctx.send(":x: | **Index inválida, para saber as index válidas use o `mute list <member>`**")
                 else:
                     dados['fichamute'][index]['Motivo'] = novomotivo
                     await salvarS(dados,ctx.guild.id)
-                    await ctx.reply(":question: | **Mute editado com sucesso**")
+                    await ctx.send(":question: | **Mute editado com sucesso**")
     class unmute(commands.Cog):
         @commands.command(name='unmute',aliases=['desmutar'])
         @commands.has_permissions(kick_members=True)
@@ -733,11 +732,11 @@ class Moderacao():
                 dados = await Dados(ctx.guild.id)
                 role = ctx.guild.get_role(dados['config']['role_mute'])
                 if role not in user.roles:
-                    await ctx.reply(f":x: | **{user.name} não está mutado**")
+                    await ctx.send(f":x: | **{user.name} não está mutado**")
                     return
                 else:
                     await user.remove_roles(role)
-                    await ctx.reply(f":question: | **{user.name} foi desmutado**")
+                    await ctx.send(f":question: | **{user.name} foi desmutado**")
     class ban(commands.Cog):
         @commands.command(name='ban',aliases=['banir'])
         @commands.has_permissions(ban_members=True)
@@ -752,7 +751,7 @@ class Moderacao():
             try:
                 memb = ctx.guild.get_member(user.id)
                 if memb.top_role >= ctx.author.top_role:
-                    await ctx.reply(":x: | **Seu cargo está abaixo do usuario**")
+                    await ctx.send(":x: | **Seu cargo está abaixo do usuario**")
                     return
             except MemberNotFound:
                 pass
@@ -760,9 +759,9 @@ class Moderacao():
             dados = await Dados(ctx.guild.id)
             if dados['config']['dmpu'] != 0:
                 try:await user.send(f":x: | **Você foi banido do servidor {ctx.guild.name}, motivo: {motivo}**")                
-                except:await ctx.reply(":x: | Erro ao mandar mensagem na DM: **DM Bloqueada**")
+                except:await ctx.send(":x: | Erro ao mandar mensagem na DM: **DM Bloqueada**")
             await ctx.guild.ban(user,reason=motivo) 
-            await ctx.reply(f":question: | **O Usuario {user.name} foi banido do servidor**")
+            await ctx.send(f":question: | **O Usuario {user.name} foi banido do servidor**")
     class unban(commands.Cog):
         @commands.command(name='unban',aliases=['desbanir'])
         @commands.has_permissions(ban_members=True)
@@ -775,7 +774,7 @@ class Moderacao():
                 await padrao(ctx,'Moderação','unban','Serve para desbanir um usuario!','`unban <user>*` -> Desban em um usuario','```unban | desbanir```','Staff')
             else:
                 await ctx.guild.unban(user)
-                await ctx.reply(f":question: | **O Usuario {user.name} foi desbanido**")
+                await ctx.send(f":question: | **O Usuario {user.name} foi desbanido**")
     class serverinfo(commands.Cog):
         @commands.command(name='serverinfo',aliases=['guildinfo'])
         @commands.before_invoke(usou)
@@ -788,7 +787,7 @@ class Moderacao():
             if guild != None:
                 guild = bot.get_guild(guild)
                 if guild == None:
-                    await ctx.reply(":x: | **Servidor não encontrado... Talvez eu não esteja dentro do servidor :thinking: **")
+                    await ctx.send(":x: | **Servidor não encontrado... Talvez eu não esteja dentro do servidor :thinking: **")
                     return
                 rol = guild.roles
                 for i in rol:
@@ -811,12 +810,12 @@ class Moderacao():
                 embed.set_thumbnail(url = guild.icon_url if guild.icon_url != "0" or 0 else None)
                 embed.set_image(url=guild.banner_url if guild.banner_url != "0" or 0 else None)
                 embed.set_footer(text='Digite "1" para ver mais detalhes')
-                msgA = await ctx.reply(embed=embed)
+                msgA = await ctx.send(embed=embed)
                 try:
                     msg = await bot.wait_for('message', check=check(ctx.author,"1"), timeout=10)   
                 except asyncio.TimeoutError:
 
-                    m = await ctx.reply(':x: | **Tempo Excedido**')
+                    m = await ctx.send(':x: | **Tempo Excedido**')
                     await asyncio.sleep(5)
                     await m.delete()
                     await msgA.delete()    
@@ -828,7 +827,7 @@ class Moderacao():
                     for d in guild.premium_subscribers: msg = msg +"\n **"+ str(d) + '**'
                     embed = discord.Embed(title=f'Informações do servidor {guild.name} | Pagina 2',description=f'Boosters:\n{msg}')
                     embed.set_footer(text='Digite "voltar" para voltar ou "2" para avançar')
-                    ma = await ctx.reply(embed=embed)
+                    ma = await ctx.send(embed=embed)
                     try:
                         msg = await bot.wait_for('message', check=check(ctx.author,["voltar","2"]), timeout=10)
                         if msg.content.lower() == 'voltar':
@@ -841,7 +840,7 @@ class Moderacao():
                             if len(em) > 1900: em = em[:1900]
                             embed = discord.Embed(title=f'Informações do servidor {guild.name} | Pagina 3',description=f'Emojis: \n{em}')
                             embed.set_footer(text='Digite "voltar" para voltar ou digite "3" para avançar')
-                            mi = await ctx.reply(embed=embed)
+                            mi = await ctx.send(embed=embed)
                             try:
                                 msg = await bot.wait_for('message', check=check(ctx.author,["voltar","3"]), timeout=10)
                                 if msg.content.lower() == 'voltar':
@@ -853,7 +852,7 @@ class Moderacao():
                                     await mi.delete()
                                     embed = discord.Embed(title=f'Informações do servidor {guild.name} | Pagina 4',description=f'Cargos: \n{fi}')
                                     embed.set_footer(text='Digite "voltar" para voltar')
-                                    mo = await ctx.reply(embed=embed)
+                                    mo = await ctx.send(embed=embed)
                                     try:
                                         msg = await bot.wait_for('message', check=check(ctx.author,["voltar"]), timeout=10)
                                         if msg.content.lower() == 'voltar':
@@ -861,18 +860,18 @@ class Moderacao():
                                             await mo.delete()
                                             pass
                                     except asyncio.TimeoutError:
-                                        m = await ctx.reply(':x: | **Tempo Excedido**')
+                                        m = await ctx.send(':x: | **Tempo Excedido**')
                                         await asyncio.sleep(5)
                                         await m.delete()
                                         return            
 
                             except asyncio.TimeoutError:
-                                m = await ctx.reply(':x: | **Tempo Excedido**')
+                                m = await ctx.send(':x: | **Tempo Excedido**')
                                 await asyncio.sleep(5)
                                 await m.delete()
                                 return    
                     except asyncio.TimeoutError:
-                        m = await ctx.reply(':x: | **Tempo Excedido**')
+                        m = await ctx.send(':x: | **Tempo Excedido**')
                         await asyncio.sleep(5)
                         await m.delete()
                         return
@@ -890,11 +889,11 @@ class Moderacao():
             except MemberNotFound:                
                 embed = discord.Embed(title=f'Informações do usuario {str(user)}', description=f'\nConta criada em: {user.created_at.date()}\n ID: `{user.id}`\n')  
             embed.set_thumbnail(url=user.avatar_url)  
-            await ctx.reply(embed=embed)
+            await ctx.send(embed=embed)
         @userinfo.error
         async def userinfo_error(self ,ctx , error):
             if isinstance(error, MemberNotFound):
-                await ctx.reply(":x: | **Membro não encontrado**")   
+                await ctx.send(":x: | **Membro não encontrado**")   
     class ticket(commands.Cog):
         @commands.command(name='ticket',aliases=['tick'])
         @commands.has_permissions(manage_channels=True)
@@ -904,7 +903,7 @@ class Moderacao():
             if await bl(ctx.author.id) == True:
                 return
             if canal == None or idmensagem == None:
-                await ctx.reply(":x: | **Para criar um sistema de tickets informe o canal de texto onde tem a mensagem e o id da mensagem para eu reagir e assim ativando o sistema de tickets**")
+                await ctx.send(":x: | **Para criar um sistema de tickets informe o canal de texto onde tem a mensagem e o id da mensagem para eu reagir e assim ativando o sistema de tickets**")
             else:
                 msg = await canal.fetch_message(idmensagem)
                 await msg.add_reaction('📤')
@@ -932,14 +931,14 @@ class Moderacao():
         @commands.cooldown(1,5,commands.BucketType.member)
         async def close_request(self,ctx,user: discord.Member=None):
             if user == None:
-                await ctx.reply(":x: | **Informe o membro do ticket para fechar**")
+                await ctx.send(":x: | **Informe o membro do ticket para fechar**")
             else:
                 print(f'tick-{str(user).replace("#","").lower()}')
                 ch = discord.utils.get(ctx.guild.channels, name='tick-'+str(user).replace('#','').lower())
                 if ch == None:
-                    await ctx.reply(":x: | **Algo deu errado... Verifique se você usou o comando corretamente**")
+                    await ctx.send(":x: | **Algo deu errado... Verifique se você usou o comando corretamente**")
                 await ch.delete()
-                await ctx.reply(':white_check_mark: | **Pronto!**')
+                await ctx.send(':white_check_mark: | **Pronto!**')
     class botinfo(commands.Cog):
         @commands.command(name='botinfo')
         @commands.before_invoke(usou)
@@ -948,7 +947,7 @@ class Moderacao():
             if await bl(ctx.author.id) == True:
                 return
             embed = discord.Embed(title=f'Olá {ctx.author.name}! Bem vindo as minhas informações.',description=f'\n\n**Estou ligado desde:** {time.localtime(ti).tm_mday}/{time.localtime(ti).tm_mon} as {time.localtime(ti).tm_hour}:{time.localtime(ti).tm_min}\nVocê sabia que eu sou **OpenSource?** -> [GitHub](https://github/Liveira/SphyxBot.py)\n\nDono do Bot: NightterX/Nightter/Liveira\nData de criação... {bot.user.created_at.date()}\nSite oficial do bot: [SphyX](https://tinyurl.com/y7dgym54) | [FAQ](https://tinyurl.com/yamfp9qp)\nServer de suporte: [SphyX Community](https://discord.gg/CG7spnTsKa)\nTotal de membros: {len(bot.users)}\nTotal de servidores: {len(bot.guilds)}\nTotal de emojis: {len(bot.emojis)}\nTotal de comandos: {len(bot.commands)}\n\n\n**Informações técnicas**\n\nLinguagem: [Python](https://python.org)\nBlibioteca: [Discord.py](https://discordpy.readthedocs.io/en/latest/api.html)\nHost: Discloud ( Plano platina )\nBot feito apartir do **ZERO**\n\n**Como surgiu o SphyX?** : No começo de tudo, eu ( Nightter ) estava criando um bot de discord para um servidor de terraria e o bot estava indo muito bem, deu um pouco de trabalho mas consegui terminar, e depois disso um amigo meu falou que seria legal criar um bot global e aqui estamos, no começo era para o bot se chamar Nez, mas decidimos que ia ser SphyX...')
-            await ctx.reply(embed=embed)
+            await ctx.send(embed=embed)
     class nuke(commands.Cog):
         @commands.command(name='nuke')
         @commands.before_invoke(usou)
@@ -957,10 +956,10 @@ class Moderacao():
             if await bl(ctx.author.id) == True:
                 return
             if ch == None:
-                await ctx.reply(":x: | **Você esqueceu de informar o canal de texto**")
+                await ctx.send(":x: | **Você esqueceu de informar o canal de texto**")
                 return
             embed = discord.Embed(title='Verificação',description=f'**Você tem certeza disso?** Se sim reaja :white_check_mark: caso o contrario reaja ❎\n\nPense bem, caso de o nuke **TODAS** as mensagens serão apagadas junto com os {len(await ch.pins())} Pins...')
-            msg = await ctx.reply(embed=embed)
+            msg = await ctx.send(embed=embed)
             await msg.add_reaction("✅")
             await msg.add_reaction("❎")
             def checkr(reaction,user):
@@ -968,24 +967,24 @@ class Moderacao():
             try:
                 reac,user = await bot.wait_for('reaction_add',check=checkr,timeout=60)
                 if reac.emoji == '❎':
-                    await ctx.reply("Nuke cancelado...")
+                    await ctx.send("Nuke cancelado...")
                     return
                 else:
-                    await ctx.reply("5 SEGUNDOS")
+                    await ctx.send("5 SEGUNDOS")
                     await asyncio.sleep(1)
-                    await ctx.reply("4 SEGUNDOS")
+                    await ctx.send("4 SEGUNDOS")
                     await asyncio.sleep(1)
-                    await ctx.reply("3 SEGUNDOS")
+                    await ctx.send("3 SEGUNDOS")
                     await asyncio.sleep(1)
-                    await ctx.reply("2 SEGUNDOS")
+                    await ctx.send("2 SEGUNDOS")
                     await asyncio.sleep(1)
-                    await ctx.reply("1 SEGUNDO")
+                    await ctx.send("1 SEGUNDO")
                     a = await ch.clone()
                     await a.edit(position=ch.position)
                     await ch.delete()
                     await a.send('First!')
             except asyncio.TimeoutError:
-                await ctx.reply(':x: | **Tempo esgotado**')
+                await ctx.send(':x: | **Tempo esgotado**')
     class emojiinfo(commands.Cog):
         @commands.command()
         @commands.before_invoke(usou)
@@ -993,7 +992,7 @@ class Moderacao():
         async def emoji(self, ctx, emoji: discord.PartialEmoji=None):
             if await bl(ctx.author.id) == True:
                 return
-            await ctx.reply(embed = discord.Embed(title=f"Informações do emoji {emoji.name}", description=f"\nAnimado: {'Sim' if emoji.animated else 'Não'}\nData de criação: {emoji.created_at.date()}\nID: `{emoji.id}`\nURL: `{emoji.url}`").set_thumbnail(url=emoji.url))
+            await ctx.send(embed = discord.Embed(title=f"Informações do emoji {emoji.name}", description=f"\nAnimado: {'Sim' if emoji.animated else 'Não'}\nData de criação: {emoji.created_at.date()}\nID: `{emoji.id}`\nURL: `{emoji.url}`").set_thumbnail(url=emoji.url))
     class lock(commands.Cog):
         @commands.command()
         @commands.has_permissions(manage_channels=True)
@@ -1005,12 +1004,12 @@ class Moderacao():
             channel = channel or ctx.channel
             kek = channel.overwrites
             if not kek[ctx.guild.default_role].send_messages:
-                await ctx.reply(':x: | **O canal escolhido já não tem permissão de enviar mensagens**')
+                await ctx.send(':x: | **O canal escolhido já não tem permissão de enviar mensagens**')
                 return
             await channel.edit(overwrites={
                 ctx.guild.default_role: discord.PermissionOverwrite(send_messages=False),
             })
-            await ctx.reply(f":question: | **Canal bloqueado | {channel.mention}!**")
+            await ctx.send(f":question: | **Canal bloqueado | {channel.mention}!**")
     class unlock(commands.Cog):
         @commands.command()
         @commands.has_permissions(manage_channels=True)
@@ -1022,12 +1021,12 @@ class Moderacao():
             channel = channel or ctx.channel
             kek = channel.overwrites
             if kek[ctx.guild.default_role].send_messages:
-                await ctx.reply(':x: | **O canal escolhido já tem permissão de enviar mensagens**')
+                await ctx.send(':x: | **O canal escolhido já tem permissão de enviar mensagens**')
                 return
             await channel.edit(overwrites={
                 ctx.guild.default_role: discord.PermissionOverwrite(send_messages=True),
             })
-            await ctx.reply(f":question: | **Canal desbloqueado | {channel.mention}!**")
+            await ctx.send(f":question: | **Canal desbloqueado | {channel.mention}!**")
     class addEmoji(commands.Cog):
         @commands.command()
         @commands.has_permissions(manage_emojis=True)
@@ -1039,9 +1038,9 @@ class Moderacao():
             a = ''
             nam = ''
             if link == None and emoji == None:
-                await ctx.reply(":x: | **Você esqueceu de colocar o link ou emoji para adicionar**")
+                await ctx.send(":x: | **Você esqueceu de colocar o link ou emoji para adicionar**")
             if nm == None:
-                await ctx.reply(":x: | **Formato errado! Aqui está um formato certo `.addemoji <nome> <emoji ou link>`")
+                await ctx.send(":x: | **Formato errado! Aqui está um formato certo `.addemoji <nome> <emoji ou link>`")
             if nm != None and link != None:
                 nam = nm
                 a = requests.get(link).content
@@ -1050,7 +1049,7 @@ class Moderacao():
                 emoji = bot.get_emoji(emoji[0].id)
                 a = requests.get(emoji.url).content
             a=await ctx.guild.create_custom_emoji(name=nam.lower().replace("?",""),image=a)
-            await ctx.reply(f":question: | **Emoji adicionado!** {str(a)}")
+            await ctx.send(f":question: | **Emoji adicionado!** {str(a)}")
     '''class clean(commands.Cog):
         @commands.group(name='clean')
         async def clean(self, ctx):
@@ -1079,7 +1078,7 @@ class Config():
             if await bl(ctx.author.id) == True:
                 return
             embed = discord.Embed(title='Ajuda de configuração',description="""Esse painel mostrara como usar o config, somente pessoas com a permissão "Administrador" pode usar esse comando\n \n:question: **Para que serve?**\nServe para mudar, intervalo de XP, Media de XP, Configurações de canais de MUTE, Canal de bem vindo e etc...\n\n:question: **Quais são os comandos?**\n`xp-time` -> Muda o tempo de CoolDown de XP\n`mute-role` -> Mudar o cargo de mute\n`welcome-channel` -> Muda o chat para mandar as mensagem de bem vindo\n`welcome-msg` -> Muda a mensagem de bem vindo\n`leave-msg` -> Muda a mensagem de saida do membro\n`media-xp` -> Muda a media de xp que o usuario ganha no servidor\n`autorole` -> Quando um membro entra no servidor ele dá esse cargo automaticamente\n`slowmode` -> Muda o CoolDown de mensagems do chat\n`prefix` -> Muda o prefixo do bot\n`dmpu` -> Manda a mensagem na DM do usuario que foi punido\n`automessage` -> quando um usuario entra no servidor essa mensagem vai ser enviada no DM automaticamente do membro\n\n:grey_question: **Perguntas Frequentes**\n**Como eu tiro o sistema de "Bem Vindo/ AutoRole" ?** : Use o comando **del**, por exemplo "`del config welcome-channel`"\n\n**__Comandos que já tem essa função__**: \n`media-xp` <Desativa o XP por completo>\n`welcome-channel` <Desativa a mensagem de Boas Vindas por completo>\n\n**Ainda ficou com dúvida?** Entre no servidor de suporte do SphyX 'https://discord.gg/hReae7c67G'\n\n:globe_with_meridians: **Outros nomes**\n```cfg | config | configurar | cf```""")
-            await ctx.reply(embed=embed)            
+            await ctx.send(embed=embed)            
         @cmdconfig.command(name='xp-time')
         @commands.has_permissions(kick_members=True)
         @commands.cooldown(1,5,commands.BucketType.member)
@@ -1091,7 +1090,7 @@ class Config():
                 dados = await Dados(ctx.guild.id)
                 ant = dados['config']['time_xp']
                 dados['config']['time_xp'] = int(novo_valor)
-                await ctx.reply(f":question:  | **Tempo de CoolDown alterado para {novo_valor}!**")
+                await ctx.send(f":question:  | **Tempo de CoolDown alterado para {novo_valor}!**")
                 dados['contIDreg'] += 1
                 cont = dados['contIDreg']
                 dados['reg'][str(cont)] = {
@@ -1115,7 +1114,7 @@ class Config():
                 dados = await Dados(ctx.guild.id)
                 ant = dados['config']['role_mute']
                 dados['config']['role_mute'] = int(novo_cargo.id)
-                await ctx.reply(f":question:  | **Cargo de mute foi mudado para: {novo_cargo}!**")
+                await ctx.send(f":question:  | **Cargo de mute foi mudado para: {novo_cargo}!**")
                 dados['contIDreg'] += 1
                 cont = dados['contIDreg']
                 dados['reg'][str(cont)] = {
@@ -1135,7 +1134,7 @@ class Config():
             if novo_valor == None:
                 #ctx: object,nomeEmbed: str,name: str,desc: str,como: str,aliases: str,perm: str) 
                 embed = discord.Embed(title='Ajuda de configuração',description='Esse painel mostrara como usar o welcome-msg, somente pessoas com a permissão "Administrador" pode usar esse comando\n\n :question:  **Para que serve?**\n\nServe para mudar a mensagem de boas vindas!\n\n\n :question: **Quais são os comandos?**\n\n`welcome-msg <nova mensagem>`\n\n:newspaper: **Guia**\n[mention] -> Menciona o usuario na mensagem\n[user] -> Coloca o nome do usuario (sem marcar)\n[usertag] -> Coloca o nome do usuario junto com a tag EX: NightterX#0311\n[guildname] -> Coloca o nome do servidor\n\n :globe_with_meridians: **Outros nomes**\n\n ```welcome-msg```')
-                await ctx.reply(embed=embed)
+                await ctx.send(embed=embed)
             else:
                 dados = await Dados(ctx.guild.id)
                 member = ctx.author
@@ -1157,7 +1156,7 @@ class Config():
                 mensagem = mensagem.replace('[user]',member.name)
                 mensagem = mensagem.replace('[usertag]',member.name + '#' + member.discriminator)
                 mensagem = mensagem.replace('[guildname]',member.guild.name)
-                await ctx.reply(f":question:  | **A mensagem de boas vindas foi mudado para: {novo_valor}!\nSua mensagem ficou assim: {mensagem}**")
+                await ctx.send(f":question:  | **A mensagem de boas vindas foi mudado para: {novo_valor}!\nSua mensagem ficou assim: {mensagem}**")
         @cmdconfig.command(name='leave-msg')
         @commands.has_permissions(kick_members=True)
         @commands.cooldown(1,5,commands.BucketType.member)
@@ -1166,7 +1165,7 @@ class Config():
             if novo_valor == None:
                 #ctx: object,nomeEmbed: str,name: str,desc: str,como: str,aliases: str,perm: str) 
                 embed = discord.Embed(title='Ajuda de configuração',description='Esse painel mostrara como usar o leave-msg, somente pessoas com a permissão "Administrador" pode usar esse comando\n\n :question:  **Para que serve?**\n\nServe para mudar a mensagem de boas vindas!\n\n\n :question: **Quais são os comandos?**\n\n`leave-msg <nova mensagem>`\n\n:newspaper: **Guia**\n[mention] -> Menciona o usuario na mensagem\n[user] -> Coloca o nome do usuario (sem marcar)\n[usertag] -> Coloca o nome do usuario junto com a tag EX: NightterX#0311\n[guildname] -> Coloca o nome do servidor\n\n :globe_with_meridians: **Outros nomes**\n\n ```leave-msg```')
-                await ctx.reply(embed=embed)
+                await ctx.send(embed=embed)
             else:
                 dados = await Dados(ctx.guild.id)
                 member = ctx.author
@@ -1188,7 +1187,7 @@ class Config():
                 mensagem = mensagem.replace('[user]',member.name)
                 mensagem = mensagem.replace('[usertag]',member.name + '#' + member.discriminator)
                 mensagem = mensagem.replace('[guildname]',member.guild.name)
-                await ctx.reply(f":question:  | **A mensagem de saida foi mudado para: {novo_valor}!\nSua mensagem ficou assim: {mensagem}**")
+                await ctx.send(f":question:  | **A mensagem de saida foi mudado para: {novo_valor}!\nSua mensagem ficou assim: {mensagem}**")
         @cmdconfig.command(name='welcome-channel')
         @commands.has_permissions(kick_members=True)
         @commands.cooldown(1,5,commands.BucketType.member)
@@ -1211,7 +1210,7 @@ class Config():
                 await salvarS(dados,ctx.guild.id)
                 global log
                 log = log + "\n" + f"WELCOME_CHANNEL Alterado para {novo_canal.name} no servidor {ctx.guild.name}"
-                await ctx.reply(f":question:  | **Canal alterado para {novo_canal}**")
+                await ctx.send(f":question:  | **Canal alterado para {novo_canal}**")
         @cmdconfig.command(name='media-xp')
         @commands.has_permissions(kick_members=True)
         @commands.cooldown(1,5,commands.BucketType.member)
@@ -1234,7 +1233,7 @@ class Config():
                 await salvarS(dados,ctx.guild.id)
                 global log
                 log = log + "\n" + f"AVERAGE_XP Alterado para {novo_valor} no servidor {ctx.guild.name}"
-                await ctx.reply(f":question:  | **A Media de XP foi alterada para {novo_valor}**")
+                await ctx.send(f":question:  | **A Media de XP foi alterada para {novo_valor}**")
         @cmdconfig.command(name='slowmode',aliases=['slow','cd','cooldown'])
         @commands.has_permissions(kick_members=True)
         @commands.cooldown(1,5,commands.BucketType.member)
@@ -1254,7 +1253,7 @@ class Config():
                             'QmMd':ctx.author.name 
                 }
                 await salvarS(dados,ctx.guild.id)
-                await ctx.reply(f":question:  | **O CoolDown do chat {chat} foi alterado para {tempo}**")
+                await ctx.send(f":question:  | **O CoolDown do chat {chat} foi alterado para {tempo}**")
                 global log
                 log = log + "\n" + f"SLOWMODE Alterado para {tempo} no servidor {ctx.guild.name}"
         @cmdconfig.command(name='prefix',aliases=['prefixo'])
@@ -1266,7 +1265,7 @@ class Config():
                 dados = await Dados(ctx.guild.id)
                 
                 if prefix in dados['prefix']:
-                    await ctx.reply(":warning: | **Já tem esse prefixo**")
+                    await ctx.send(":warning: | **Já tem esse prefixo**")
                 else:
                     dados['prefix'][1] = prefix
                     cont = dados['contIDreg']
@@ -1278,7 +1277,7 @@ class Config():
                     await salvarS(dados,ctx.guild.id)
                     global log
                     log = log + "\n" + f"AVERAGE_XP Alterado para {prefix} no servidor {ctx.guild.name}"
-                    await ctx.reply(f":question: | **Prefixo alterado para \"{prefix}\" **")
+                    await ctx.send(f":question: | **Prefixo alterado para \"{prefix}\" **")
             else:
                 await padrao(ctx,"Moderação",'prefix','Muda o prefixo do bot do servidor! Mude para oque quiser letras e etc...','`prefix <novo prefixo>*`  ','```prefix | prefixo```','Staff')
         @cmdconfig.group(name='autorole',invoke_without_command=True)
@@ -1308,7 +1307,7 @@ class Config():
                             'QmMd':ctx.author.name 
                 }
                 await salvarS(dados,ctx.guild.id)
-                await ctx.reply(":question: | **Um cargo de autorole foi adicionado**")
+                await ctx.send(":question: | **Um cargo de autorole foi adicionado**")
         @cmdautorole.command(name='list',aliases=['listar'])
         @commands.has_permissions(kick_members=True)
         @commands.cooldown(1,5,commands.BucketType.member)
@@ -1322,7 +1321,7 @@ class Config():
             embed=discord.Embed(title='Lista do AutoRole',description='Aqui vai mostrar todos os cargos em ordem que estão no seu autorole')
             embed.add_field(name='INDEX    |     CARGO  ',value=f'```\n{msg}```')
             embed.set_footer(text='Está gostando do SphyX? Doe! .donate ',icon_url=ctx.author.avatar_url)
-            await ctx.reply(embed=embed)
+            await ctx.send(embed=embed)
         @cmdautorole.command(name='remove',aliases=['remover'])
         @commands.has_permissions(kick_members=True)
         @commands.cooldown(1,5,commands.BucketType.member)
@@ -1336,11 +1335,11 @@ class Config():
                     ant = dados['config']['autorole'][index]['roleid']
                     del dados['config']['autorole'][index]
                 except KeyError:
-                    await ctx.reply(":x: | **Você colocou um Index inválido, para saber os index de cada cargo use o \"config autorole list\"**")    
+                    await ctx.send(":x: | **Você colocou um Index inválido, para saber os index de cada cargo use o \"config autorole list\"**")    
                     return
                 await salvarS(dados,ctx.guild.id)
                 role = ctx.guild.get_role(ant)
-                await ctx.reply(f":question: | **Pronto! O Cargo {role.name}**")
+                await ctx.send(f":question: | **Pronto! O Cargo {role.name}**")
         @cmdconfig.command(name='des',aliases=['desativar','del'])
         @commands.has_permissions(kick_members=True)
         @commands.cooldown(1,5,commands.BucketType.member)
@@ -1352,10 +1351,10 @@ class Config():
                 tipo = tipo.replace("-","_")
                 dados = await Dados(ctx.guild.id)
                 if not tipo in dados['config']:
-                    await ctx.reply(":x: | **Tipo invalido!**")
+                    await ctx.send(":x: | **Tipo invalido!**")
                 else:
                     dados['config'][tipo] = 0
-                    await ctx.reply(f":question:  | **A função {tipo} foi desativado(a)**")
+                    await ctx.send(f":question:  | **A função {tipo} foi desativado(a)**")
                 await salvarS(dados,ctx.guild.id)
         @cmdconfig.command(name='dmpu')
         @commands.has_permissions(kick_members=True)
@@ -1369,12 +1368,12 @@ class Config():
                 dados = await Dados(ctx.guild.id)
                 if tipo == 'ativar':
                     dados['config']['dmpu'] = 1
-                    await ctx.reply(":question: | **Mensagems de punição na DM foram ativados**")
+                    await ctx.send(":question: | **Mensagems de punição na DM foram ativados**")
                 elif tipo == 'desativar':
                     dados['config']['dmpu'] = 0
-                    await ctx.reply(":question: | **Mensagems de punição na DM foram desativados**")
+                    await ctx.send(":question: | **Mensagems de punição na DM foram desativados**")
                 else:
-                    await ctx.reply(":x: | **Use `ativar` ou `desativar`**")
+                    await ctx.send(":x: | **Use `ativar` ou `desativar`**")
                 await salvarS(dados,ctx.guild.id)
         @cmdconfig.command(name='automessage')
         @commands.has_permissions(kick_members=True)
@@ -1417,7 +1416,7 @@ class Config():
                 await salvarS(dados,ctx.guild.id)
                 global log
                 log = log + "\n" + f"LEAVE_CHANNEL Alterado para {novo_canal.name} no servidor {ctx.guild.name}"
-                await ctx.reply(f":question:  | **Canal alterado para {novo_canal}**")
+                await ctx.send(f":question:  | **Canal alterado para {novo_canal}**")
     bot.add_cog(config(bot))
 class RR(): 
     class ReactionRoles(commands.Cog):
@@ -1452,7 +1451,7 @@ class RR():
                     }
                 await salvarS(dados,ctx.guild.id)
                 await msg.add_reaction(emoji)
-                await ctx.reply(":question: | **ReactionRole Setado com sucesso**")
+                await ctx.send(":question: | **ReactionRole Setado com sucesso**")
         @commands.Cog.listener()
         async def on_raw_reaction_add(self, payload):
             channel = await bot.fetch_channel(payload.channel_id)
@@ -1501,7 +1500,7 @@ class Diversao():
             js = url.json()
             embed = discord.Embed(title='Gato Aleatorio')
             embed.set_image(url=js['file'])
-            await ctx.reply(embed=embed)
+            await ctx.send(embed=embed)
     class Dog(commands.Cog):
         @commands.command(name='cachorro',aliases=['dog','cachorros','cachorroaleatorio','randomdog'])
         @commands.before_invoke(usou)
@@ -1514,7 +1513,7 @@ class Diversao():
             js = url.json()
             embed = discord.Embed(title='Cachorro Aleatorio')
             embed.set_image(url=js['message'])
-            await ctx.reply(embed=embed)
+            await ctx.send(embed=embed)
     class Ciencia(commands.Cog):
         @commands.command(name='ciencia',aliases=['acienciafoilongedemais','simounao'])
         @commands.before_invoke(usou)
@@ -1544,7 +1543,7 @@ class Diversao():
                 nome_do_arquivo=f"ciencia.png"
                 template.save(nome_do_arquivo)
                 arq = discord.File(open(nome_do_arquivo,'rb'))
-            msg = await ctx.reply(file=arq)
+            msg = await ctx.send(file=arq)
             await msg.add_reaction('😮')
             await msg.add_reaction('😠')
     class Art(commands.Cog):
@@ -1580,7 +1579,7 @@ class Diversao():
                 nome_do_arquivo=f"btfoul.png"
                 template.save(nome_do_arquivo)
                 arq = discord.File(open(nome_do_arquivo,'rb'))
-            msg = await ctx.reply(file=arq)
+            msg = await ctx.send(file=arq)
     class Fogo(commands.Cog): 
         @commands.command(name='fogo',aliases=['fire'])
         @commands.before_invoke(usou)
@@ -1613,7 +1612,7 @@ class Diversao():
                 nome_do_arquivo=f"fire.png"
                 kak.save(nome_do_arquivo)
                 arq = discord.File(open(nome_do_arquivo,'rb'))#218 294
-            msg = await ctx.reply(file=arq)
+            msg = await ctx.send(file=arq)
     class Triste(commands.Cog):
         @commands.command(name='triste',aliases=['sad'])
         @commands.before_invoke(usou)
@@ -1646,7 +1645,7 @@ class Diversao():
                 nome_do_arquivo=f"fire.png"
                 kak.save(nome_do_arquivo)
                 arq = discord.File(open(nome_do_arquivo,'rb'))#218 294
-            msg = await ctx.reply(file=arq)
+            msg = await ctx.send(file=arq)
     class News(commands.Cog):
         @commands.command(name='news',aliases=['noticia','noticias'])
         @commands.before_invoke(usou)
@@ -1689,7 +1688,7 @@ class Diversao():
                 nome_do_arquivo=f"fire.png"
                 kak.save(nome_do_arquivo)
                 arq = discord.File(open(nome_do_arquivo,'rb'))#218 294
-            msg = await ctx.reply(file=arq)
+            msg = await ctx.send(file=arq)
         #51 476
     class Anime(commands.Cog):
         @commands.command(name='anime')
@@ -1700,12 +1699,12 @@ class Diversao():
             if await bl(ctx.author.id) == True:
                 return
             if nome == None:
-                await ctx.reply(":x: | **Você esqueceu de informar o nome do anime**")
+                await ctx.send(":x: | **Você esqueceu de informar o nome do anime**")
             else:
                 try:
                     resultado = AnimeSearch(nome)
                 except ValueError:
-                    await ctx.reply(':x: | **Nenhum resultado foi encontrado com esse nome**')
+                    await ctx.send(':x: | **Nenhum resultado foi encontrado com esse nome**')
                     return
                 anime = resultado.results[0]
                 embed = discord.Embed(title=anime.title)
@@ -1713,7 +1712,7 @@ class Diversao():
                 embed.set_thumbnail(url=anime.image_url)
                 
                 embed.set_footer(text=f'ID: {anime.mal_id}')
-                await ctx.reply(embed=embed)
+                await ctx.send(embed=embed)
     class Osu(commands.Cog):
         @commands.command(name='osu',invoke_without_command=True)
         @commands.before_invoke(usou)
@@ -1723,18 +1722,18 @@ class Diversao():
             if await bl(ctx.author.id) == True:
                 return
             if user == None:
-                await ctx.reply("Você esqueceu de colocar um valor, você pode tentar ```osu <user>```  ou ```osu_beatmap <beatmap id>```")
+                await ctx.send("Você esqueceu de colocar um valor, você pode tentar ```osu <user>```  ou ```osu_beatmap <beatmap id>```")
             else:
                 resulta = osu.get_user(user)
                 try:
                     user = resulta[0]
                 except IndexError:
-                    await ctx.reply(":x: | **Você informou um usuario não existente, tente novamente**")
+                    await ctx.send(":x: | **Você informou um usuario não existente, tente novamente**")
                     return
                 embed = discord.Embed(title=f'Perfil de {user.username}')
                 embed.add_field(name=f'Informações do membro {user.username}',value=f'\nNivel: {int(user.level)}\n\nData de entrada: [{user.join_date}]\n\nTempo de jogo: {user.total_seconds_played // 60 // 60} Horas de jogo\n\nRANK PP: {user.pp_rank}\n\nPrecisão: {int(user.accuracy)}\n\nQuantidade de partidas jogadas: {user.playcount}\n\nPontuação: {user.total_score}\n\n**Contagem de grade**\nSS+ : {user.count_rank_ssh}\nSS : {user.count_rank_ss}\nS+ : {user.count_rank_sh}\nS : {user.count_rank_s}\nA : {user.count_rank_a}')
                 embed.set_thumbnail(url=f'http://s.ppy.sh/a/{user.user_id}')
-                await ctx.reply(embed=embed)
+                await ctx.send(embed=embed)
     class OsuBeatMap(commands.Cog):
         @commands.command(name='osubeatmap')
         @commands.before_invoke(usou)
@@ -1744,14 +1743,14 @@ class Diversao():
             if await bl(ctx.author.id) == True:
                 return
             if beatmap == None:
-                await ctx.reply("Você esqueceu de colocar o id do beatmap")
+                await ctx.send("Você esqueceu de colocar o id do beatmap")
             else:
                 bp=0
                 haha = osu.get_beatmaps(beatmap_id=beatmap)
                 try:
                     bp = haha[0]
                 except IndexError:
-                    await ctx.reply(":x: | **Você informou um beatmap inexistente**")
+                    await ctx.send(":x: | **Você informou um beatmap inexistente**")
                     return
                 embed = discord.Embed(title=f'Beatmap {bp.title}')
                 if bp.approved == "1":
@@ -1767,7 +1766,7 @@ class Diversao():
 
                 embed.add_field(name=f'Informações do beatmap {bp.title}',value=f'\nStatus do BP: {apro}\n\nCriador: {bp.artist}\n\nBPM: {bp.bpm}\n\nMedia de dificuldade: {int(bp.difficultyrating)}\n\nTags: {bp.tags}\n\nDuração: {bp.total_length // 60} Minutos e {int(bp.total_length % 60)} Segundos')
                 embed.set_thumbnail(url=f'https://assets.ppy.sh/beatmaps/{bp.beatmap_id}/covers/cover.jpg')
-                await ctx.reply(embed=embed)    
+                await ctx.send(embed=embed)    
     class Run(commands.Cog):
         @commands.command(name='run')
         @commands.before_invoke(usou)
@@ -1781,7 +1780,7 @@ class Diversao():
                     file = ctx.message.attachments
                     await file[0].save('krek.py')    
                 except IndexError:
-                    await ctx.reply('Insira o código')
+                    await ctx.send('Insira o código')
                     return
             
             file = ctx.message.attachments
@@ -1792,7 +1791,7 @@ class Diversao():
                 with open("krek.py",'w') as f:
                     f.write(code)
             process = subprocess.Popen(['python.exe','krek.py'], stdout=subprocess.PIPE)
-            await ctx.reply(f"```\n{process.communicate()[0].decode('cp1250')}```")
+            await ctx.send(f"```\n{process.communicate()[0].decode('cp1250')}```")
     class Avatar(commands.Cog):
         @commands.command(name='avatar')
         @commands.before_invoke(usou)
@@ -1802,7 +1801,7 @@ class Diversao():
             if await bl(ctx.author.id) == True:
                 return
             user = user or ctx.author
-            await ctx.reply(embed=discord.Embed(title=f'Avatar de {user.name}').set_image(url=user.avatar_url))
+            await ctx.send(embed=discord.Embed(title=f'Avatar de {user.name}').set_image(url=user.avatar_url))
     class servericon(commands.Cog):
         @commands.command(name='servericon')
         @commands.before_invoke(usou)
@@ -1814,11 +1813,11 @@ class Diversao():
             if guild!=None:
                 guild = bot.get_guild(guild)
                 if guild == None:
-                    await ctx.reply(":x: | **Não achei nenhum servidor...**")
+                    await ctx.send(":x: | **Não achei nenhum servidor...**")
                     return
             else:
                 guild = ctx.guild
-            await ctx.reply(embed=discord.Embed(title=f'Icone do servidor {guild.name}').set_image(url=guild.icon_url))
+            await ctx.send(embed=discord.Embed(title=f'Icone do servidor {guild.name}').set_image(url=guild.icon_url))
     class calendario(commands.Cog):
         @commands.command()
         @commands.before_invoke(usou)
@@ -1827,7 +1826,7 @@ class Diversao():
         async def calendario(self, ctx,ano:int,mes:int):
             if await bl(ctx.author.id) == True:
                 return
-            await ctx.reply(f"```python\n{calendar.month(ano,mes)}\n```")
+            await ctx.send(f"```python\n{calendar.month(ano,mes)}\n```")
     class dados(commands.Cog):
         @commands.command(aliases=['dado','dados'])
         @commands.before_invoke(usou)
@@ -1838,7 +1837,7 @@ class Diversao():
                 return
             match = re.search("^(0*[1-9][0-9]*)d(0*[1-9][0-9]*)(?:\+*([0-9]+))??$",dice)
             if match == None:
-                await ctx.reply(":x: | **Formato inválido...** | Exemplos: `.dice 10d20` ou `.dice 10d20+6`\n**10** <- Quantidade de dados | d |**20** <- Quantidade de lados | + ( Opcional ) **6** <- Acréscimo bruto |")
+                await ctx.send(":x: | **Formato inválido...** | Exemplos: `.dice 10d20` ou `.dice 10d20+6`\n**10** <- Quantidade de dados | d |**20** <- Quantidade de lados | + ( Opcional ) **6** <- Acréscimo bruto |")
                 return
             qntdad = int(match.group(1))
             qntlad = int(match.group(2))
@@ -1851,7 +1850,7 @@ class Diversao():
             if match.group(3) != None:
                 result += int(match.group(3))
                 lis.append(f'+ {match.group(3)}')
-            await ctx.reply(f":question: | **Aqui o resultado {result}** | {lis}")
+            await ctx.send(f":question: | **Aqui o resultado {result}** | {lis}")
     '''class lol(commands.Cog):
         @commands.command()
         @commands.before_invoke(usou)
@@ -1875,7 +1874,7 @@ class Diversao():
                 sb.lsd_scale = 0.5
                 sb.save_video('lol.mp4')
                 arq = discord.File(open('lol.mp4','rb'))
-            await ctx.reply(file=arq)
+            await ctx.send(file=arq)
             discord.utils.get('poetico', bot.emojis)'''
     bot.add_cog(Anime(bot))
     #bot.add_cog(lol(bot))
@@ -1907,7 +1906,7 @@ class Economia():
             user = user or ctx.author
             dados = await UDados(user.id)
             embed = discord.Embed(title=f'Conta bancaria de {user.name}',description=f'A Conta bancaria é o lugar onde tem informações de economia do usuario\n\nSeu dinheiro: **{dados["money"]}**\nSeus Gold Coins: **{dados["gold"]}**')
-            await ctx.reply(embed=embed)
+            await ctx.send(embed=embed)
     class Daily(commands.Cog):
         @commands.command(name='daily',aliases=['diaria','day'])
         @commands.cooldown(1,24000,commands.BucketType.member)
@@ -1922,11 +1921,11 @@ class Economia():
             await salvar(dados,ctx.author.id)
             embed = discord.Embed(title=f'Recompensa diaria de {ctx.author.name}',description=f'Você pegou sua recompensa diaria de hoje, para pegar a proxima pegue no proxima dia\n\nVocê ganhou {rand} moedas!')
             embed.set_thumbnail(url='https://media.discordapp.net/attachments/765971397524062220/788833032382840882/gift.png')
-            await ctx.reply(embed=embed)
+            await ctx.send(embed=embed)
         @daily.error
         async def err(self,ctx,error):
             if isinstance(error, CommandOnCooldown):
-                await ctx.reply(":x: | **Você já resgatou sua recompensa diaria**")
+                await ctx.send(":x: | **Você já resgatou sua recompensa diaria**")
     class TopMoney(commands.Cog):
         @commands.command(name='topmoney',aliases=['rankdinheiro','rankcoin'])
         @commands.before_invoke(usou)
@@ -1948,8 +1947,8 @@ class Economia():
                     isa = a.name
                 nm+=1
                 msg = msg +f'\n#{nm} | **{isa}** - {i["money"]}'
-            try:await ctx.reply(msg)
-            except:await ctx.reply(':x: | **Não achei nenhum resultado...**')
+            try:await ctx.send(msg)
+            except:await ctx.send(':x: | **Não achei nenhum resultado...**')
     class Pay(commands.Cog):
         @commands.command(name='pay',aliases=['pagar'])
         @commands.before_invoke(usou)
@@ -1959,22 +1958,22 @@ class Economia():
             if await bl(ctx.author.id) == True:
                 return
             if user == None:
-                await ctx.reply(":x: | **Você precisa informar um membro**")
+                await ctx.send(":x: | **Você precisa informar um membro**")
             elif user.id == ctx.author.id:
-                await ctx.reply(":x: | **Você não pode se pagar**")
+                await ctx.send(":x: | **Você não pode se pagar**")
             elif dinheiro <= 0:
-                await ctx.reply(":x: | **Você precisa dar um numero maior que 0**")
+                await ctx.send(":x: | **Você precisa dar um numero maior que 0**")
             else:
                 dados = await UDados(ctx.author.id)
                 outro = await UDados(user.id)
                 if dinheiro > dados['money']:
-                    await ctx.reply(":x: | **Você não pode pagar essa quantidade**")
+                    await ctx.send(":x: | **Você não pode pagar essa quantidade**")
                 else:
                     dados['money'] -= dinheiro
                     outro['money'] += dinheiro
                     await salvar(dados,ctx.author.id)
                     await salvar(outro,user.id)
-                    await ctx.reply(f":question: | **Você deu {dinheiro}cs para {user.name}**")
+                    await ctx.send(f":question: | **Você deu {dinheiro}cs para {user.name}**")
     class Giveway(commands.Cog):
         @commands.command(name='giveway',aliases=['sorteio','sortear'])
         @commands.before_invoke(usou)
@@ -1984,10 +1983,10 @@ class Economia():
             if await bl(ctx.author.id) == True:
                 return
             if horario == None:
-                await ctx.reply(":x: | **Informe o tempo do sorteio e a mensagem**")
+                await ctx.send(":x: | **Informe o tempo do sorteio e a mensagem**")
             else:
                 embed = discord.Embed(title='Sorteio',description=f'\n{message}**\nNumero de ganhadores {num}\nTempo de sorteio {horario}**')
-                msg = await ctx.reply(embed=embed)
+                msg = await ctx.send(embed=embed)
                 horario = horario.lower()
                 await msg.add_reaction('🎉')
                 global vargv
@@ -1997,7 +1996,7 @@ class Economia():
                     ti = {"s":1,"m":60,"h":60*60,"d":60*60*60}
                     time = tim * ti[d]
                 except:
-                    await ctx.reply("Formatos de horarios disponiveis [s/m/h/d]")
+                    await ctx.send("Formatos de horarios disponiveis [s/m/h/d]")
                     return
                 if time < 61:
                     await asyncio.sleep(time)
@@ -2012,7 +2011,7 @@ class Economia():
                             user = ctx.guild.get_member(lk[i])
                         msgA = msgA + user.mention + ','
                         krek.append(user)
-                    await ctx.reply(f" 🎉 {msgA} Ganhou o sorteio!")                
+                    await ctx.send(f" 🎉 {msgA} Ganhou o sorteio!")                
         @commands.Cog.listener()
         async def on_reaction_add(self,reaction,user):
             global vargv
@@ -2050,7 +2049,7 @@ class Economia():
                             msg = msg +'\n'+ f' ID : **{isa}**  |  :dollar: ' + str(shop[str(isa)]['preco']) + ' - ' + shop[str(isa)]['name']
                         except KeyError as err:
                             embed.add_field(name=f'Pagina {index} ',value=msg)
-                            msg = await ctx.reply(embed=embed)
+                            msg = await ctx.send(embed=embed)
                             fu = True
                             break
                 if isa == index*10:
@@ -2058,7 +2057,7 @@ class Economia():
                         pass
                     else:
                         embed.add_field(name=f'Pagina {index} ',value=msg)
-                        msg = await ctx.reply(embed=embed)   
+                        msg = await ctx.send(embed=embed)   
                 try:
                     def checkMS(author,messagecheck):
                         def inner_check(message):
@@ -2089,10 +2088,10 @@ class Economia():
                         try: 
                             val = li[0]
                             await Economia.Comprar.comprar(self,ctx,val)
-                        except ValueError: await ctx.reply(":question: | **Você mandou uma mensagem diferente, caso queira comprar um item use o comando novamente**")    
-                except asyncio.TimeoutError: await ctx.reply(":x: | Loja: **Tempo esgotado**")
+                        except ValueError: await ctx.send(":question: | **Você mandou uma mensagem diferente, caso queira comprar um item use o comando novamente**")    
+                except asyncio.TimeoutError: await ctx.send(":x: | Loja: **Tempo esgotado**")
             except HTTPException as err:
-                await ctx.reply(':x: | Loja: **Pagina inexistente**')
+                await ctx.send(':x: | Loja: **Pagina inexistente**')
                 return    
     class Inventory(commands.Cog):
         @commands.command(name='inventory',aliases=['inventario','inv'])
@@ -2119,7 +2118,7 @@ class Economia():
                     break
             embed.add_field(name=f'Pagina {index}',value=msg if msg != "" else "Você não tem nenhum item, veja alguns itens usando o `.shop`!")  
             embed.set_footer(text='Use "info" para ver as informações ou usar o item')      
-            msg = await ctx.reply(embed=embed)
+            msg = await ctx.send(embed=embed)
             def checkMS(author,messagecheck):
                 def inner_check(message):
                     if message.author == author:
@@ -2153,28 +2152,28 @@ class Economia():
                                     return
                             except IndexError: return
                         except KeyError:
-                            await ctx.reply(":x: | **Nome invalido! Verifique se você tem esse item em seu inventario** ")
+                            await ctx.send(":x: | **Nome invalido! Verifique se você tem esse item em seu inventario** ")
                             return 
                     vard = ["Use \"voltar\" para voltar ao inventario","Use \"use\" para usar o item"]
                     embed = discord.Embed(title=f'Informações do item: {var["name"]}',description=f'\n`{var["desc"]}`\n\nUsavel: **{"Sim" if var["use"] else "Não"}** | Tipo do item: **{var["tip"]}**')
                     embed.set_footer(text=f"{vard[1]+' '+vard[0] if var['use'] else vard[0]}")
                     embed.set_thumbnail(url=var['preview'])
-                    m = await ctx.reply(embed=embed)
+                    m = await ctx.send(embed=embed)
                     try: ms = await bot.wait_for(event='message',check=check(ctx.author,['usar','use','voltar','back']),timeout=60)
                     except asyncio.TimeoutError:
-                        await ctx.reply(':x: | Inventario: **Tempo esgotado**'); return
+                        await ctx.send(':x: | Inventario: **Tempo esgotado**'); return
                     if ms.content.lower() == 'use' or ms.content.lower() == 'usar':
                         await m.delete()
                         await ms.delete()
                         dados['profile'][var['tipte']]['url'] = var['preview']
                         dados['profile'][var['tipte']]['name'] = var['name']
-                        await ctx.reply(f":question: | **Você usou o item {var['name']}**")
+                        await ctx.send(f":question: | **Você usou o item {var['name']}**")
                         await salvar(dados,ctx.author.id)
                     else:
                         await ms.delete()
                         await m.delete()
                         await Economia.Inventory.inventory(self,ctx,index)
-                except ValueError: await ctx.reply(":x: | **Você usou a forma errada... aqui está o jeito certo `item <nome>`**")                
+                except ValueError: await ctx.send(":x: | **Você usou a forma errada... aqui está o jeito certo `item <nome>`**")                
     class Comprar(commands.Cog):
         @commands.command(name='comprar',aliases=['buy'])
         @commands.before_invoke(usou)
@@ -2187,13 +2186,13 @@ class Economia():
             with open('shop.json','r',encoding='utf-8') as f:
                 shop = dict(json.load(f))
             if index == None:
-                await ctx.reply(":x: | ** Index invalida, para ver index válidas use o .shop **")
+                await ctx.send(":x: | ** Index invalida, para ver index válidas use o .shop **")
             else:
                 d = await UDados(ctx.author.id)
                 embed = discord.Embed(title=shop[index]['name'], description=f'\n\n`{shop[index]["desc"]}`\n\nPreco: {shop[index]["preco"]} | Você tem {d["money"]} | {":white_check_mark:" if d["money"] >= shop[index]["preco"] else ":x:"}\n\n{"Esse item é consumivel" if shop[index]["usa"] else "Esse item não é consumivel"} | Tipo do item: {shop[index]["categoria"]} | Autor: {shop[index]["author"] if shop[index]["author"] != None else "Nenhum / Indefinido"}')
                 embed.set_footer(text='Reaja ✅ Para confirmar a compra ou ♻️ para comprar e usar',icon_url=ctx.author.avatar_url)
                 embed.set_thumbnail(url=shop[index]["preview"])
-                msg = await ctx.reply(embed=embed)                
+                msg = await ctx.send(embed=embed)                
                 await msg.add_reaction('✅')
                 await msg.add_reaction('♻️')
                 def checkr(reaction,user):
@@ -2201,7 +2200,7 @@ class Economia():
                 try:
                     reac,user = await bot.wait_for('reaction_add',check=checkr,timeout=60)
                     if shop[index]["preco"] > d['money']:
-                        await ctx.reply(':x: | **Você não tem dinheiro suficiente para fazer essa compra**')
+                        await ctx.send(':x: | **Você não tem dinheiro suficiente para fazer essa compra**')
                     else:
                         if shop[index]['name'] not in d['inventory']:                        
                             d['inventory'][shop[index]['name']] = {
@@ -2215,18 +2214,18 @@ class Economia():
                                 "tipte":shop[index]['ti'],
                                 "author":shop[index]['author']
                             }
-                            await ctx.reply(f":question: | **Você comprou {shop[index]['name']}** ")
+                            await ctx.send(f":question: | **Você comprou {shop[index]['name']}** ")
                             d['money'] -= shop[index]["preco"]
                         else:
                             if shop[index]['onetime']:
-                                await ctx.reply(":x: | **Você só pode comprar isso 1 vez**")
+                                await ctx.send(":x: | **Você só pode comprar isso 1 vez**")
                                 return    
                             d['inventory'][shop[index]['name']]["cont"] += 1
                         if reac.emoji == '♻️':
                             d['profile'][shop[index]['ti']] = {'url':shop[index]['preview'],'name':shop[index]['name']}
                     await salvar(d,ctx.author.id)
                 except asyncio.TimeoutError:
-                    ms = await ctx.reply(":x: | **Tempo excedido**")
+                    ms = await ctx.send(":x: | **Tempo excedido**")
                     await asyncio.sleep(3)
                     await ms.delete()
     '''class trabalhos(commands.Cog):
@@ -2254,7 +2253,7 @@ class Dev():
                     params=[('-H', 'Accept: application/vnd.github.scarlet-witch-preview+json')],
                     )
             if re.status_code != 200:
-                await ctx.reply(":x: | **Algo deu errado**")
+                await ctx.send(":x: | **Algo deu errado**")
             else:
                 rep = dict(re.json())
                 embed = discord.Embed(title=f'Repositorio de {rep["owner"]["login"]}', description=f'\n\nNome do repositorio: **{rep["full_name"]}**\nDescrição: {rep["description"]}\nURL : https://github/{rep["owner"]["login"]}/{rep["name"]}\nLinguagem: {rep["language"]}\nQuantidade de estrelas: {rep["stargazers_count"]}\nForks: {rep["forks_count"]}'                
@@ -2262,7 +2261,7 @@ class Dev():
                 embed.set_thumbnail(url='https://cdn.discordapp.com/attachments/776197504378732555/793430718525079572/25231.png')
                 embed.set_image(url=rep['owner']['avatar_url'])
                 embed.set_footer(text=f'Criado em {rep["created_at"]}',icon_url='https://cdn.discordapp.com/emojis/786911257596133426.png?v=1')
-                await ctx.reply(embed=embed)
+                await ctx.send(embed=embed)
     class Traduzir(commands.Cog):
         @commands.command(name='traduzir',aliases=['translate'])
         @commands.before_invoke(usou)
@@ -2272,7 +2271,7 @@ class Dev():
             if await bl(ctx.author.id) == True:
                 return
             if de == None:
-                await ctx.reply(":x: | **Você fez do jeito incorreto, como usar: `.traduzir PtBr EnUs Olá mundo!` <- De português para inglês ou `.traduzir EnUs PtBr Hello World!` de inglês para português!**")
+                await ctx.send(":x: | **Você fez do jeito incorreto, como usar: `.traduzir PtBr EnUs Olá mundo!` <- De português para inglês ou `.traduzir EnUs PtBr Hello World!` de inglês para português!**")
                 return
             url = 'https://api.gotit.ai/Translation/v1.1/Translate'
             data = {"T":mensagem,"SL":de,"TL":para}
@@ -2282,10 +2281,10 @@ class Dev():
             response = requests.post(url, data=data_json, headers=headers)
             if response.status_code != 200:
                 print(response.status_code)
-                await ctx.reply(":x: | **Você fez do jeito incorreto, como usar: `.traduzir PtBr EnUs Olá mundo!` <- De português para inglês ou `.traduzir EnUs PtBr Hello World!` de inglês para português!")
+                await ctx.send(":x: | **Você fez do jeito incorreto, como usar: `.traduzir PtBr EnUs Olá mundo!` <- De português para inglês ou `.traduzir EnUs PtBr Hello World!` de inglês para português!")
                 return
             js = response.json()
-            await ctx.reply(f'Texto traduzido: {js["result"]}') 
+            await ctx.send(f'Texto traduzido: {js["result"]}') 
     class Short(commands.Cog):
         @commands.command(name='short',aliases=['encurtador','link'])
         @commands.before_invoke(usou)
@@ -2295,10 +2294,10 @@ class Dev():
             if await bl(ctx.author.id) == True:
                 return
             if link == None: 
-                await ctx.reply(':x: | **Você esqueceu de colocar o link**')
+                await ctx.send(':x: | **Você esqueceu de colocar o link**')
                 return
             s = pyshorteners.Shortener()
-            await ctx.reply(f':question: | **Aqui está o seu link:** {s.tinyurl.short(link)}')
+            await ctx.send(f':question: | **Aqui está o seu link:** {s.tinyurl.short(link)}')
     class QR(commands.Cog):
         @commands.command(name='qr',aliases=['qrcode'])
         @commands.before_invoke(usou)
@@ -2308,12 +2307,12 @@ class Dev():
             if await bl(ctx.author.id) == True:
                 return
             if link == None: 
-                await ctx.reply(':x: | **Você esqueceu de colocar o link**')
+                await ctx.send(':x: | **Você esqueceu de colocar o link**')
                 return
             img = qrcode.make(link)
             img.save('nome_do_arquivo.png')
             arq = discord.File(open('nome_do_arquivo.png','rb'))#218 294
-            msg = await ctx.reply(file=arq)
+            msg = await ctx.send(file=arq)
     class hastebin(commands.Cog):
         @commands.command(name='hastebin')
         @commands.before_invoke(usou)
@@ -2329,12 +2328,12 @@ class Dev():
                     with open("krek.py",'r') as f:
                         code = f.read()
                 except IndexError:
-                    await ctx.reply(":x: | **Você esqueceu de colocar o código, você pode tentar um arquivo ou escrever** Como usar: `.hastebin <py tem que ser a extensão do arquivo da linguagem> <code>`")
+                    await ctx.send(":x: | **Você esqueceu de colocar o código, você pode tentar um arquivo ou escrever** Como usar: `.hastebin <py tem que ser a extensão do arquivo da linguagem> <code>`")
                     return
             req = requests.post('https://hastebin.com/documents',
             data=code)
             key = json.loads(req.content)   
-            await ctx.reply(f':question: | **Aqui está o link:** https://hastebin.com/{key["key"]} ')             
+            await ctx.send(f':question: | **Aqui está o link:** https://hastebin.com/{key["key"]} ')             
     class att(commands.Cog):
         @commands.command(name='att')
         @commands.cooldown(1,5,commands.BucketType.member)
@@ -2346,7 +2345,7 @@ class Dev():
             for i in bot.users:
                 a.append({"_id":i.id,'nome':i.name,'mar':0,'desc':'Eu sou uma pessoa misteriosa, mas eu posso mudar minha descrição usando .desc','rep':0,"xp_time":0,'money':0,'gold':0,'inventory':{"Padrão": {"name": "Padrão","desc": "Background padrão","tip": "BackGround Profile","use": True,"cont": 0,"onetime": True,"preview": "https://media.discordapp.net/attachments/776197504378732555/795800876383338496/default.png?width=642&height=459","tipte": "back-pf","author": "SphyX Team"}},'profile':{'back-pf':{'url':'https://media.discordapp.net/attachments/776197504378732555/795800876383338496/default.png?width=642&height=459','name':"Padrão"}}})
             users.insert_many(a)
-            await ctx.reply("FASASASASASS")
+            await ctx.send("FASASASASASS")
     class teste(commands.Cog):
         @commands.command(name='teste')
         @commands.cooldown(1,5,commands.BucketType.member)
@@ -2361,7 +2360,7 @@ class Dev():
                 print(i)
             sets = {"$set":guilds}
             users.update_one(guids,sets)
-            await ctx.reply("De primeira caralho")
+            await ctx.send("De primeira caralho")
     class ping(commands.Cog):
         @commands.group(name='ping',invoke_without_command=True)
         @commands.before_invoke(usou)
@@ -2370,7 +2369,7 @@ class Dev():
         async def ping(self,ctx):
             if await bl(ctx.author.id) == True:
                 return
-            await ctx.reply(f":question: | **Minha látencia é: {int(bot.latency * 1000)}**")
+            await ctx.send(f":question: | **Minha látencia é: {int(bot.latency * 1000)}**")
         @ping.command(name='shard',aliases=['shards'])
         @commands.cooldown(1,5,commands.BucketType.member)
         @blacklists()
@@ -2380,7 +2379,7 @@ class Dev():
                 s = bot.get_shard(i)
                 msg = msg + '\n' + f'{"*"if s.id == ctx.guild.shard_id else ""}[{s.id}\t|{int(s.latency*1000)}\t|{s.is_closed()}\t]'
             
-            await ctx.reply('```python\n'+msg+'\n```')
+            await ctx.send('```python\n'+msg+'\n```')
     class xko(commands.Cog):
         @commands.command(name='xko')
         @commands.cooldown(1,5,commands.BucketType.member)
@@ -2390,7 +2389,7 @@ class Dev():
                 return
             d = await UDados(user.id)
             d['money'] += int(qnt)
-            await ctx.reply(f"{random.randrange(10,100000)}")
+            await ctx.send(f"{random.randrange(10,100000)}")
             await salvar(d,user.id)
     class _eval(commands.Cog):
         @commands.command()
@@ -2420,8 +2419,8 @@ class Dev():
                     resultado = f"\n{obj}\n"
             except Exception as e:
                 resultado = f"ERRO: {e.args}"
-            await ctx.reply(embed=discord.Embed(title=':inbox_tray: **Entrada**',description=f'```python\n{code}\n```'))    
-            await ctx.message.reply(embed=discord.Embed(title=':outbox_tray: **Saida**',description='```python\n'+str(resultado)+'```'))        
+            await ctx.send(embed=discord.Embed(title=':inbox_tray: **Entrada**',description=f'```python\n{code}\n```'))    
+            await ctx.send(embed=discord.Embed(title=':outbox_tray: **Saida**',description='```python\n'+str(resultado)+'```'))        
     class html(commands.Cog):
         @commands.command(name='html',aliases=['markdowntohtml'])
         @commands.before_invoke(usou)
@@ -2432,7 +2431,7 @@ class Dev():
                 return
             mark = markdown.Markdown()
             hml = mark.convert(message)
-            msg = await ctx.reply(":question: | **Reaja :envelope_with_arrow: para receber os últimos 2000 caracteres no seu DM, reaja :computer: para eu mandar o código inteiro ou reaja :printer: para eu mandar um preview**")
+            msg = await ctx.send(":question: | **Reaja :envelope_with_arrow: para receber os últimos 2000 caracteres no seu DM, reaja :computer: para eu mandar o código inteiro ou reaja :printer: para eu mandar um preview**")
             await msg.add_reaction('📩')
             await msg.add_reaction('💻')
             await msg.add_reaction('🖨')
@@ -2443,12 +2442,12 @@ class Dev():
                 if reac.emoji == '💻':
                     req = requests.post('https://hastebin.com/documents',data=hml)
                     key = json.loads(req.content)   
-                    await ctx.reply(f':question: | **Aqui está o código:** https://hastebin.com/{key["key"]}')
+                    await ctx.send(f':question: | **Aqui está o código:** https://hastebin.com/{key["key"]}')
                 elif reac.emoji == '📩':
                     await ctx.author.send(f"```html\n{hml[:1980]}...\n```")
                     await ctx.message.add_reaction("📩")
                 elif reac.emoji == '🖨':
-                    msg = await ctx.reply("Aguarde...")
+                    msg = await ctx.send("Aguarde...")
                     mk = str(hml)
                     fi = mk
                     hml = '<!DOCTYPE html>\n<html>\n\t<head>\n\t\t<meta charset="utf-8">\n\t\t<meta name="viewport" content="width=800 height=600">\n\t\t<title>a</title>\n\t\t<style>\n\t\t\tbody{\n\t\t\t\tbackground-color: black;\n\t\t\t}\n\t\t\ttext{\n\t\t\t\tfont-size: 38px;\n\t\t\t\tcolor: white;\n\t\t\t\tfont-family: Arial, Helvetica, sans-serif;\n\t\t\t\ttext-indent: 50px;\n\t\t\t}\n\t\t\t</style>\n\t</head>\n\t<body>\n\t<text>\n'+fi+'\n\t</text>\n\t</body>\n</html>'
@@ -2457,11 +2456,11 @@ class Dev():
                     grabzIt.HTMLToImage(hml, options)
                     grabzIt.SaveTo("result.png")
                     f = discord.File('result.png')
-                    await ctx.reply(file=f)
+                    await ctx.send(file=f)
                     await msg.delete()
                     await ctx.author.send(f"Entrada...```html\n{hml}\n```")
             except asyncio.TimeoutError:
-                await ctx.reply(":x: | **Tempo esgotado...**")
+                await ctx.send(":x: | **Tempo esgotado...**")
     class invite(commands.Cog):
         @commands.command()
         @commands.before_invoke(usou)
@@ -2471,7 +2470,7 @@ class Dev():
             if await bl(ctx.author.id) == True:
                 return
             emo = bot.get_emoji(798585999692791820)
-            await ctx.reply(embed=discord.Embed(title='Me adicione!',description=f":flushed: | **Opa, você quer me adicionar no servidor? Se sim, muito obrigado, se você me adicionar vai faltar {100 - 1 - len(bot.guilds) } servidores para eu ganhar verificado!** [Link de convite](https://discord.com/api/oauth2/authorize?client_id=782737686238461952&permissions=8&scope=bot)"))
+            await ctx.send(embed=discord.Embed(title='Me adicione!',description=f":flushed: | **Opa, você quer me adicionar no servidor? Se sim, muito obrigado, se você me adicionar vai faltar {100 - 1 - len(bot.guilds) } servidores para eu ganhar verificado!** [Link de convite](https://discord.com/api/oauth2/authorize?client_id=782737686238461952&permissions=8&scope=bot)"))
     class vote(commands.Cog):
         @commands.command()
         @commands.before_invoke(usou)
@@ -2480,7 +2479,7 @@ class Dev():
         async def vote(self, ctx):
             if await bl(ctx.author.id) == True:
                 return
-            await ctx.reply("Vote em mim! https://top.gg/bot/782737686238461952/vote")
+            await ctx.send("Vote em mim! https://top.gg/bot/782737686238461952/vote")
     class ocr(commands.Cog):
         @commands.command(name='ocr',aliases=['digitalizar'])
         async def ocr(self,ctx: commands.Context):
@@ -2494,12 +2493,12 @@ class Dev():
                         fot = atch[0].url
             else:
                 if ultimafoto[str(ctx.guild.id)] == None:
-                    await ctx.reply(":x: | **Não encontrei nenhuma foto ou você não informou a foto**")
+                    await ctx.send(":x: | **Não encontrei nenhuma foto ou você não informou a foto**")
                     return
                 else:
                     fot = ultimafoto[str(ctx.guild.id)]
             a = pytesseract.image_to_string(img.open(BytesIO(requests.get(fot).content)),lang='ptbr')
-            await ctx.reply(f'```\n{a}\n```')'''
+            await ctx.send(f'```\n{a}\n```')'''
     class regex(commands.Cog):
         @commands.command(name='regex',aliases=['re'])
         @commands.before_invoke(usou)
@@ -2511,10 +2510,10 @@ class Dev():
             try:
                 a = re.search(regex,string)
                 if a == None:
-                    await ctx.reply(":question: | **String não deu match**")
+                    await ctx.send(":question: | **String não deu match**")
                 else:
-                    await ctx.reply(f":question: | **MATCH: {a.groups()} | {a.string}**")
-            except:await ctx.reply(":x: | **Formato inválido**")
+                    await ctx.send(f":question: | **MATCH: {a.groups()} | {a.string}**")
+            except:await ctx.send(":x: | **Formato inválido**")
     bot.add_cog(hastebin(bot))
     bot.add_cog(ocr(bot))
     bot.add_cog(regex(bot))
@@ -2587,7 +2586,7 @@ class Social():
                 temp.save('pfout.png',otimize=True,quality=100)
                 arq = discord.File(open('pfout.png','rb'))#218 294
                 #261 112
-            msg = await ctx.reply(file=arq)
+            msg = await ctx.send(file=arq)
             arq.close()
     class Desc(commands.Cog):
         @commands.command(name='desc',aliases=['sobre-mim','sobre'])
@@ -2598,7 +2597,7 @@ class Social():
             if await bl(ctx.author.id) == True:
                 return
             if nova_desc == None:
-                await ctx.reply(':x: | **Você esqueceu de colocar a descrição**')
+                await ctx.send(':x: | **Você esqueceu de colocar a descrição**')
             else:
                 var=''
                 dados = await UDados(ctx.author.id)
@@ -2610,7 +2609,7 @@ class Social():
                 dados['desc'] = var
                 await salvar(dados,ctx.author.id)
 
-                await ctx.reply(f":question: | **Pronto, descrição alterado para** ```{var}```")
+                await ctx.send(f":question: | **Pronto, descrição alterado para** ```{var}```")
     class Help(commands.Cog):
         @commands.command(name='help',aliases=['ajuda'])
         @commands.before_invoke(usou)
@@ -2621,7 +2620,7 @@ class Social():
                 return
             embed = discord.Embed(title=f'Olá {str(ctx.author)}!',description='**Parece que você precisa de ajuda...\n**\n**Quer ver meus comandos?**\n\a [Comandos](https://sphyx-6ffe7.web.app/pages/comandos.html)\n\a [TopGG](https://top.gg/bot/782737686238461952)\n\n**Está com alguma dúvida?**\n\a [FAQ](https://sphyx-6ffe7.web.app/pages/FAQ.html)\n\a [Server do discord](https://discord.gg/CG7spnTsKa)')
             embed.set_footer(text=f'{ctx.author.name} usou as {str(time.strftime("%H:%M", time.localtime()))}',icon_url=ctx.author.avatar_url)
-            await ctx.message.reply(embed=embed)
+            await ctx.send(embed=embed)
     class Rep(commands.Cog):
         @commands.command(name='rep',aliases=['reputação'])
         @commands.cooldown(1,48000,BucketType.user)
@@ -2632,19 +2631,19 @@ class Social():
             if await bl(ctx.author.id) == True:
                 return
             if user == None:
-                await ctx.reply(':x: | **Você não informou um membro**')
+                await ctx.send(':x: | **Você não informou um membro**')
                 a = bot.get_command('rep')
                 a.reset_cooldown(ctx)
             else:
                 if user.id == ctx.author.id:
-                    await ctx.reply(":x: | **Você não pode dar reputação para você mesmo**")
+                    await ctx.send(":x: | **Você não pode dar reputação para você mesmo**")
                     a = bot.get_command('rep')
                     a.reset_cooldown(ctx)
                     return
                 dados = await UDados(user.id)
                 dados['rep'] += 1
                 await salvar(dados,user.id)
-                await ctx.reply(f":question: | **Você deu um ponto de reputação para {user.mention}**")
+                await ctx.send(f":question: | **Você deu um ponto de reputação para {user.mention}**")
     class addBack(commands.Cog):
         @commands.command(name='addBack')
         @commands.before_invoke(usou)
@@ -2654,7 +2653,7 @@ class Social():
             if await bl(ctx.author.id) == True:
                 return
             if ctx.author.id in devs:
-                msg = await ctx.reply(":white_check_mark: | **Informe o nome do background**")
+                msg = await ctx.send(":white_check_mark: | **Informe o nome do background**")
                 def checkMS(author):
                         def inner_check(message):
                             if message.author == author and ctx.guild == message.guild:
@@ -2701,7 +2700,7 @@ class Social():
                 ig.paste(temp,(0,0),temp)
                 ig.save('jsa.png',format='png')
                 file = discord.File(open('jsa.png','rb'))
-                await ctx.reply('Aqui está um preview! Você quer realmente adicionar? Se sim digite "aceito"',file=file)
+                await ctx.send('Aqui está um preview! Você quer realmente adicionar? Se sim digite "aceito"',file=file)
                 try: 
                     ms = await bot.wait_for(event='message',check=check(ctx.author,'aceito'),timeout=30)
                     with open('shop.json','w') as f:
@@ -2716,14 +2715,14 @@ class Social():
             if await bl(ctx.author.id) == True:
                 return
             if user == None:
-                await ctx.reply(":x: | **Você não informou o membro**")
+                await ctx.send(":x: | **Você não informou o membro**")
                 return
             dados = await UDados(ctx.author.id)
             outro = await UDados(user.id)
             if dados['mar'] != 0 or outro['mar'] != 0:
-                await ctx.reply(":x: | **Você ou ele(a) já está casado, para divorciar use `.divorcio`**")
+                await ctx.send(":x: | **Você ou ele(a) já está casado, para divorciar use `.divorcio`**")
                 return
-            msg = await ctx.reply(f":question: | **Você quer mesmo se casar com {user.name}, vocês dois precisam pagar 4500 para se casar, {user.mention} se quiser se casar com {ctx.author.mention} reaja no anel!**")
+            msg = await ctx.send(f":question: | **Você quer mesmo se casar com {user.name}, vocês dois precisam pagar 4500 para se casar, {user.mention} se quiser se casar com {ctx.author.mention} reaja no anel!**")
             await msg.add_reaction('💍')
             def checkr(reaction,useraa):
                     return useraa == user and reaction.emoji in ["💍"]
@@ -2732,9 +2731,9 @@ class Social():
                 dado = await UDados(ctx.author.id)
                 outro = await UDados(user.id)
                 if dado['money'] < 4500 or outro['money'] < 4500:
-                    await ctx.reply(":x: | **Você não tem dinheiro para fazer o casamento!**")
+                    await ctx.send(":x: | **Você não tem dinheiro para fazer o casamento!**")
                     return
-                await ctx.reply(f":heart: | **Parece que aconteceu um casamento :flushed:, {ctx.author.name} se casou com {user.name}**")
+                await ctx.send(f":heart: | **Parece que aconteceu um casamento :flushed:, {ctx.author.name} se casou com {user.name}**")
                 outro['mar'] = ctx.author.id
                 dado['mar'] = user.id
                 dado['money'] -= 4500
@@ -2742,7 +2741,7 @@ class Social():
                 await salvar(dado,ctx.author.id)
                 await salvar(outro,user.id)
             except asyncio.TimeoutError:
-                await ctx.reply(":sob: | **Parece que o casamento não deu certo**")
+                await ctx.send(":sob: | **Parece que o casamento não deu certo**")
     class divorcio(commands.Cog):
         @commands.command(name='divorcio')
         @commands.before_invoke(usou)
@@ -2753,9 +2752,9 @@ class Social():
                 return
             dados = await UDados(ctx.author.id)
             if dados['mar'] == 0:
-                await ctx.reply(':x: | **Você não pode se divorciar com ninguem :thonk:**')
+                await ctx.send(':x: | **Você não pode se divorciar com ninguem :thonk:**')
             else:
-                msg = await ctx.reply("Você tem certeza?")
+                msg = await ctx.send("Você tem certeza?")
                 await msg.add_reaction('✅')
                 def checkr(reaction,useraa):
                     return useraa == ctx.author and reaction.emoji in ["✅"]
@@ -2767,11 +2766,11 @@ class Social():
                     o = await UDados(us.id)
                     o['mar'] = 0
                     await us.send(f':sob: | **{ctx.author.name} se divorciou de você..., você pode ter feito algo que ele(a) não gostou...**')
-                    await ctx.reply(f":sob: | **Você se divorciou de {us.name}**")
+                    await ctx.send(f":sob: | **Você se divorciou de {us.name}**")
                     await salvar(dados,ctx.author.id)
                     await salvar(o,us.id)
                 except asyncio.TimeoutError:
-                    await ctx.reply(':smiley: | **Parece que o casamento ainda não acabou**')
+                    await ctx.send(':smiley: | **Parece que o casamento ainda não acabou**')
     bot.add_cog(Profile(bot))
     bot.add_cog(Help(bot))
     bot.add_cog(Rep(bot))
@@ -2789,9 +2788,9 @@ class EventLog(commands.Cog):
         if await bl(ctx.author.id) == True:
                 return
         if channel == None:
-            await ctx.reply(":x: | **Você esqueceu de inserir o canal de texto**") 
+            await ctx.send(":x: | **Você esqueceu de inserir o canal de texto**") 
         else:
-            await ctx.reply("**Pronto...**, o event log foi ativado, porém ele está com a configuração ZERADA, para configurar use o comando `.eventlog config` que lá mostrara todas as configurações do event log!")
+            await ctx.send("**Pronto...**, o event log foi ativado, porém ele está com a configuração ZERADA, para configurar use o comando `.eventlog config` que lá mostrara todas as configurações do event log!")
             dados = await Dados(ctx.guild.id)
             dados['config']['eventlog'] = {
                 "chid":channel.id,
@@ -2807,29 +2806,29 @@ class EventLog(commands.Cog):
     @blacklists()
     async def Econfig(self,ctx,coisa=None):
         if coisa == None:
-            await ctx.reply(":question: | **Aqui está um mini guia!, para ativar uma opção use o comando `.eventlog config <nome da config>` e para desativar use o comando novamente!**\n`newmemb` -> Avisa quando um membro entrar e quando um membro for desbanido\n`leftmemb` -> Avisa quando um membro saiu ou foi banido\n`msgdel` -> Avisa quando uma mensagem for apagada\n`editmsgs` -> Avisa quando uma mensagem for editada\n\nUm exemplo de como ativar uma opção: `.eventlog config leftmemb` e para desativar um comando é só usar o comando novamente")
+            await ctx.send(":question: | **Aqui está um mini guia!, para ativar uma opção use o comando `.eventlog config <nome da config>` e para desativar use o comando novamente!**\n`newmemb` -> Avisa quando um membro entrar e quando um membro for desbanido\n`leftmemb` -> Avisa quando um membro saiu ou foi banido\n`msgdel` -> Avisa quando uma mensagem for apagada\n`editmsgs` -> Avisa quando uma mensagem for editada\n\nUm exemplo de como ativar uma opção: `.eventlog config leftmemb` e para desativar um comando é só usar o comando novamente")
             return
         d = await Dados(ctx.guild.id)
         try:
             if coisa not in d['config']['eventlog']:
-                await ctx.reply(":x: | **Tipo inválido, use o comando sem argumentos para ver a ajuda**")
+                await ctx.send(":x: | **Tipo inválido, use o comando sem argumentos para ver a ajuda**")
             else:
                 if d['config']['eventlog'][coisa] == False:
                     d['config']['eventlog'][coisa] = True
-                    await ctx.reply(":question: | **Opção ativada**")
+                    await ctx.send(":question: | **Opção ativada**")
                 else:
                     d['config']['eventlog'][coisa] = False
-                    await ctx.reply(":question: | **Opção desativada**")
+                    await ctx.send(":question: | **Opção desativada**")
                 await salvarS(d,ctx.guild.id)
-        except Exception as ex:await ctx.reply(ex.args)
+        except Exception as ex:await ctx.send(ex.args)
     @eventlog.command(name='painel')
     @commands.has_permissions(administrator=True)
     @commands.cooldown(1,5,commands.BucketType.member)
     @blacklists()
     async def painel(self,ctx):
         d = await Dados(ctx.guild.id)
-        try:await ctx.reply(f"Painel do eventlog\n\n**Entrada de membro**: {d['config']['eventlog']['newmemb']}\n**Saida de membro**: {d['config']['eventlog']['leftmemb']}\n**Mensagem editadas**: {d['config']['eventlog']['editmsgs']}\n**Mensagens apagadas**: {d['config']['eventlog']['msgdel']}")
-        except: await ctx.reply(":x: | **Você não ativou o event log, para ativar use `.eventlog`**")
+        try:await ctx.send(f"Painel do eventlog\n\n**Entrada de membro**: {d['config']['eventlog']['newmemb']}\n**Saida de membro**: {d['config']['eventlog']['leftmemb']}\n**Mensagem editadas**: {d['config']['eventlog']['editmsgs']}\n**Mensagens apagadas**: {d['config']['eventlog']['msgdel']}")
+        except: await ctx.send(":x: | **Você não ativou o event log, para ativar use `.eventlog`**")
     @commands.has_permissions(administrator=True)
     @eventlog.command(name='desativar')
     @commands.cooldown(1,5,commands.BucketType.member)
@@ -2839,8 +2838,8 @@ class EventLog(commands.Cog):
         try:
             d['config']['eventlog']['chid'] = 0
             await salvarS(ctx.guild.id)
-            await ctx.reply(":question: | **Event log desativado com sucesso**")
+            await ctx.send(":question: | **Event log desativado com sucesso**")
         except:
-            await ctx.reply(":x: | **Você não ativou o event log, para ativar use `.eventlog`**")
+            await ctx.send(":x: | **Você não ativou o event log, para ativar use `.eventlog`**")
 bot.add_cog(EventLog(bot))
-bot.run(config['token'])
+bot.run(config['token2'])
