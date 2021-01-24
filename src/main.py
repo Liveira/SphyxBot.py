@@ -636,31 +636,37 @@ class Moderacao():
             ant = tempoMute
             if dados['config']['role_mute'] == 0:
                 await ctx.reply(":x: | **Você não configurou o cargo de mute! Configure usando o comando** `config mute-role <cargo>`")
+                return
             else:
                 role = ctx.guild.get_role(dados['config']['role_mute'])
             if tempoMute == None:
                 pass
             else:
-                tim = int(re.search("^([0-9]+[1-6]*)([smhd])$",tempoMute).group(1))
-                d = re.search("^([0-9]+[1-6]*)([smhd])$",tempoMute).group(2)
-                ti = {"s":1,"m":60,"h":60*60,"d":60*60*60}
                 try:
-                    time = tim * ti[d]
-                except KeyError:
-                    await ctx.send(":x: | **Formato invalido... Formatos corrretos: [ s | m | d | h ] / 10d -> 10 Dias**")
+                    tim = int(re.search("^([0-9]+[1-6]*)([smhd])$",tempoMute).group(1))
+                    d = re.search("^([0-9]+[1-6]*)([smhd])$",tempoMute).group(2)
+                    ti = {"s":1,"m":60,"h":60*60,"d":60*60*60}
+                    try:
+                        time = tim * ti[d]
+                    except KeyError:
+                        await ctx.send(":x: | **Formato invalido... Formatos corrretos: [ s | m | d | h ] / 10d -> 10 Dias**")
+                except AttributeError:
+                    motivo = tempoMute + ' ' + motivo
+                    tempoMute = None
             if tempoMute == None:
                 await user.add_roles(role)
                 await ctx.reply(f":question: | **O Usuario: {user.name} foi mutado por um tempo inderterminado, motivo: {motivo}**")
                 if dados['config']['dmpu'] == 1:
                     try:await user.send(f"Você está **Mutado** por tempo inderteminado, motivo: {motivo}")                        
                     except:await ctx.reply(":x: | Erro ao mandar mensagem na DM: **DM Bloqueada**")           
-            await user.add_roles(role)
-            cont=0 
-            await ctx.reply(f":question: | **O Usuario: {user.name} foi mutado por {ant}, motivo: {motivo}**")
-            print(time)
-            if dados['config']['dmpu'] == 1:
-                    try:await user.send(f"Você está **Mutado** por {ant}, motivo: {motivo}")
-                    except:await ctx.reply(":x: | Erro ao mandar mensagem na DM: **DM Bloqueada**")
+            else:
+                await user.add_roles(role)
+                cont=0 
+                await ctx.reply(f":question: | **O Usuario: {user.name} foi mutado por {ant}, motivo: {motivo}**")
+                print(time)
+                if dados['config']['dmpu'] == 1:
+                        try:await user.send(f"Você está **Mutado** por {ant}, motivo: {motivo}")
+                        except:await ctx.reply(":x: | Erro ao mandar mensagem na DM: **DM Bloqueada**")
             if user.id not in dados['users']:
                 dados['users'][str(user.id)] = {'warns':0,'ficha':{},'fichamute':{},'contmute':0,'mute':{}}
             dados['users'][str(user.id)]['contmute'] += 1
