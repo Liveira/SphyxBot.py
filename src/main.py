@@ -81,7 +81,7 @@ def prefix(bot,message):
     for i in x:
         lis.append(i)
     return commands.when_mentioned_or(*lis[0]['prefix'])(bot, message)
-bot = commands.AutoShardedBot(command_prefix=prefix,case_insensitive=True,intents=intents)
+bot = commands.AutoShardedBot(command_prefix='b!',case_insensitive=True,intents=intents)
 bot.remove_command('help')
 epoch = datetime.datetime.utcfromtimestamp(0)
 @tasks.loop(seconds=30)
@@ -452,7 +452,7 @@ class events(commands.Cog):
                     return
                 elif colDown[ctx.author.id][ctx.command.name]['vz'] == 4:
                     await ctx.send(f":x: | **Você pediu... Sua conta foi banida de usar o SphyX por 7 Dias...**")
-                    blackli(ctx.author.id,10) #1512000
+                    blackli(ctx.author.id,1512000) #
                     return
                 if colDown[ctx.author.id][ctx.command.name]['vz'] == 2:await ctx.send(f":x: | **Não fique usando comandos no cooldown, agora espere {int(error.retry_after)} segundos pra usar denovo**")
                 else: await ctx.send(f":x: | **Espere {int(error.retry_after)} segundos para você usar o comando novamente**")
@@ -750,8 +750,7 @@ class Moderacao():
         @commands.command(name='unban',aliases=['desbanir'])
         @commands.has_permissions(ban_members=True)
         @commands.before_invoke(usou)
-        @commands.cooldown(1,5,commands.BucketType.member)
-        
+        @commands.cooldown(1,5,commands.BucketType.member)  
         async def unban(self,ctx,user: discord.User=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -1066,6 +1065,7 @@ class Config():
             await ctx.reply(embed=embed)            
         @cmdconfig.command(name='xp-time')
         @commands.has_permissions(kick_members=True)
+        @commands.cooldown(1,5,commands.BucketType.member)
         async def xp_time(self,ctx,novo_valor: int=None):
             if novo_valor == None:
                 await padrao(ctx,'configuração','xp-time','Serve para mudar o tempo de cooldown para ganhar o XP','`xp-time <Novo Valor: SEGUNDOS>*` -> Muda o CoolDown de XP','```xp-time```','Staff')
@@ -1088,6 +1088,8 @@ class Config():
                 log = log + "\n" + f"XP_TIME alterado para {novo_valor} no servidor {ctx.guild.name}"
         @cmdconfig.command(name='mute-role')
         @commands.has_permissions(kick_members=True)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def mute_role(self,ctx,novo_cargo: discord.Role=None):
             if novo_cargo == None:
                 await padrao(ctx,'configuração','mute-role','Serve para mudar o cargo de mute do servidor','`mute-role <Novo Valor: CARGO>*` -> Muda o cargo de mute','```mute-role```','Staff')
@@ -1110,6 +1112,8 @@ class Config():
                 log = log + "\n" + f"MUTE_ROLE Alterado para {novo_cargo.name} no servidor {ctx.guild.name}"
         @cmdconfig.command(name='welcome-msg')
         @commands.has_permissions(kick_members=True)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def welcome_msg(self,ctx,*,novo_valor: str=None):
             if novo_valor == None:
                 #ctx: object,nomeEmbed: str,name: str,desc: str,como: str,aliases: str,perm: str) 
@@ -1139,6 +1143,8 @@ class Config():
                 await ctx.reply(f":question:  | **A mensagem de boas vindas foi mudado para: {novo_valor}!\nSua mensagem ficou assim: {mensagem}**")
         @cmdconfig.command(name='leave-msg')
         @commands.has_permissions(kick_members=True)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def leave_msg(self,ctx,*,novo_valor: str=None):
             if novo_valor == None:
                 #ctx: object,nomeEmbed: str,name: str,desc: str,como: str,aliases: str,perm: str) 
@@ -1168,6 +1174,8 @@ class Config():
                 await ctx.reply(f":question:  | **A mensagem de saida foi mudado para: {novo_valor}!\nSua mensagem ficou assim: {mensagem}**")
         @cmdconfig.command(name='welcome-channel')
         @commands.has_permissions(kick_members=True)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def welcome_channel(self,ctx,novo_canal: discord.TextChannel=None):
             if novo_canal == None:
                 await padrao(ctx,'Moderação','welcome-channel','Muda o canal que o bot manda a mensagem de boas vindas! Caso não queira mais mensagems de boas vindas, só não faça nada','`welcome-channel <canal de texto>*` -> Muda o canal de boas vindas','welcome-channel','Staff')       
@@ -1189,6 +1197,8 @@ class Config():
                 await ctx.reply(f":question:  | **Canal alterado para {novo_canal}**")
         @cmdconfig.command(name='media-xp')
         @commands.has_permissions(kick_members=True)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def media_xp(self,ctx,novo_valor=None):
             if novo_valor == None:
                 await padrao(ctx,'Moderação','media-xp','Muda a media de Xp que o usuario ganha no servidor','`media-xp <xp>*` -> Muda a media de xp','media-xp','Staff')       
@@ -1210,6 +1220,8 @@ class Config():
                 await ctx.reply(f":question:  | **A Media de XP foi alterada para {novo_valor}**")
         @cmdconfig.command(name='slowmode',aliases=['slow','cd','cooldown'])
         @commands.has_permissions(kick_members=True)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def slowmode(self,ctx,chat: discord.TextChannel=None,tempo=0):
             if chat == None:
                 await padrao(ctx,'Moderação','slowmode','Muda o tempo de cooldown de um chat em especifico sem limites','`slowmode <chat>* tempo*` -> Muda o tempo de CoolDown de um chat','``` slowmode | slow | cd | cooldown```','Staff')
@@ -1230,6 +1242,8 @@ class Config():
                 log = log + "\n" + f"SLOWMODE Alterado para {tempo} no servidor {ctx.guild.name}"
         @cmdconfig.command(name='prefix',aliases=['prefixo'])
         @commands.has_permissions(kick_members=True)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def prefix(self,ctx,prefix=None):
             if prefix != None:
                 dados = await Dados(ctx.guild.id)
@@ -1252,10 +1266,14 @@ class Config():
                 await padrao(ctx,"Moderação",'prefix','Muda o prefixo do bot do servidor! Mude para oque quiser letras e etc...','`prefix <novo prefixo>*`  ','```prefix | prefixo```','Staff')
         @cmdconfig.group(name='autorole',invoke_without_command=True)
         @commands.has_permissions(kick_members=True)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def cmdautorole(self,ctx,role: discord.Role=None):
                 await padrao(ctx,'Moderação','autorole','Da um cargo automatico quando a pessoa entra no servidor','`add <cargo>*` -> Muda o cargo de Autorole\n`edit <index> <cargo>* <novo index>` -> Edita a posição do cargo\n`list` -> lista todos as autoroles','```autorole```','Staff')
         @cmdautorole.command(name='add',aliases=['adicionar'])
         @commands.has_permissions(kick_members=True)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def add(self,ctx,role: discord.Role=None):
             if role == None:
                 await padrao(ctx,'Moderação','add autorole','Serve para adicionar um cargo automatico!','`add <cargo>*` -> Adiciona um cargo no autorolelist','```add```',"Staff")
@@ -1276,6 +1294,8 @@ class Config():
                 await ctx.reply(":question: | **Um cargo de autorole foi adicionado**")
         @cmdautorole.command(name='list',aliases=['listar'])
         @commands.has_permissions(kick_members=True)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def list(self,ctx):
             dados = await Dados(ctx.guild.id)
             msg=""
@@ -1288,6 +1308,8 @@ class Config():
             await ctx.reply(embed=embed)
         @cmdautorole.command(name='remove',aliases=['remover'])
         @commands.has_permissions(kick_members=True)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def remover(self,ctx,index=None):
             if index == None:
                 await padrao(ctx,'Moderação','autorole remove','Serve para tirar um cargo de um autorole, coloque o index do cargo que você quer remover e pronto!','`autorole remove <index autorole>`','```remove | remover```','Staff')
@@ -1304,6 +1326,8 @@ class Config():
                 await ctx.reply(f":question: | **Pronto! O Cargo {role.name}**")
         @cmdconfig.command(name='des',aliases=['desativar','del'])
         @commands.has_permissions(kick_members=True)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def des(self,ctx,tipo=None):
             if tipo == None:
                 await padrao(ctx,'Moderação','des','Desativa uma função do bot, seja ele autorole, mensagems de boas vindas e entre outros...','`des <tipo>*` -> Desativa a função de acordo com o tipo que você digitou!\n**Tipos existentes**\nwelcome-channel -> Desativa as mensagems de boas vindas\nautorole -> Desativa o autorole\nmedia-xp -> Desativa o xp','```des | desativiar | del```','Staff')
@@ -1318,6 +1342,8 @@ class Config():
                 await salvarS(dados,ctx.guild.id)
         @cmdconfig.command(name='dmpu')
         @commands.has_permissions(kick_members=True)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def dmpu(self,ctx,tipo=None):
             if tipo == None:
                 await padrao(ctx,'Moderação','dmpu','Quando ativado o usuario que levou algum tipo de punição por exemplo Warn, o bot vai diretamente no DM dele avisar','`dmpu ativar ou desativar` -> Desativa ou Ativa a mensagem de punição na DM','```dmpu```','Staff')
@@ -1335,6 +1361,8 @@ class Config():
                 await salvarS(dados,ctx.guild.id)
         @cmdconfig.command(name='automessage')
         @commands.has_permissions(kick_members=True)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def atmessage(self,ctx,*,nova_mensagem=None):
             if nova_mensagem == None:
                 await padrao(ctx,'Moderação','automessage','Quando ativo os proximos membros que entrarem no servidor vão receber uma mensagem de boas vindas escrito por você!','`automessage <nova_mensagem>*`','```automessage```','Staff')
@@ -1352,6 +1380,8 @@ class Config():
                 log = log + "\n" + f"AVERAGE_XP Alterado para {prefix} no servidor {ctx.guild.name}"
         @cmdconfig.command(name='leave-channel')
         @commands.has_permissions(kick_members=True)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def leave_channel(self,ctx,novo_canal: discord.TextChannel=None):
             if novo_canal == None:
                 await padrao(ctx,'Moderação','leave-channel','Muda o canal que o bot manda a mensagem de saida!','`leave-channel <canal de texto>*` -> Muda o canal de saida','leave-channel','Staff')       
@@ -1377,6 +1407,8 @@ class RR():
         @commands.group(name='rr',aliases=['reactionroles'],invoke_without_command=True) 
         @commands.has_permissions(manage_roles=True)
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def rr(self,ctx,channelA: discord.TextChannel=None,message_id=None,emoji=None,cargo: discord.Role=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -1443,6 +1475,8 @@ class Diversao():
     class Gato(commands.Cog):
         @commands.command(name='gato',aliases=['cat','gatos','gatoaleatorio','randomcat'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def cat(self,ctx):
             if await bl(ctx.author.id) == True:
                 return
@@ -1454,6 +1488,8 @@ class Diversao():
     class Dog(commands.Cog):
         @commands.command(name='cachorro',aliases=['dog','cachorros','cachorroaleatorio','randomdog'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def dog(self,ctx):
             if await bl(ctx.author.id) == True:
                 return
@@ -1465,6 +1501,8 @@ class Diversao():
     class Ciencia(commands.Cog):
         @commands.command(name='ciencia',aliases=['acienciafoilongedemais','simounao'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def ciencia(self,ctx,user: discord.User=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -1495,6 +1533,8 @@ class Diversao():
     class Art(commands.Cog):
         @commands.command(name='art',aliases=['arte'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def art(self,ctx,user: discord.User=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -1527,6 +1567,8 @@ class Diversao():
     class Fogo(commands.Cog): 
         @commands.command(name='fogo',aliases=['fire'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def art(self,ctx,user: discord.User=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -1558,6 +1600,8 @@ class Diversao():
     class Triste(commands.Cog):
         @commands.command(name='triste',aliases=['sad'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def art(self,ctx,user: discord.User=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -1589,6 +1633,8 @@ class Diversao():
     class News(commands.Cog):
         @commands.command(name='news',aliases=['noticia','noticias'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def news(self,ctx,user: commands.Greedy[discord.Member]=None,*,message=f'Noticias CHOCANTES! O Servidor morreu por falta de membros'):
             if await bl(ctx.author.id) == True:
                 return
@@ -1631,6 +1677,8 @@ class Diversao():
     class Anime(commands.Cog):
         @commands.command(name='anime')
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def anime(self,ctx,*,nome: str=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -1652,6 +1700,8 @@ class Diversao():
     class Osu(commands.Cog):
         @commands.command(name='osu',invoke_without_command=True)
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def osu(self,ctx,*,user: str=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -1671,6 +1721,8 @@ class Diversao():
     class OsuBeatMap(commands.Cog):
         @commands.command(name='osubeatmap')
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def beatmap(self,ctx,beatmap=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -1702,6 +1754,8 @@ class Diversao():
     class Run(commands.Cog):
         @commands.command(name='run')
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def run(self,ctx,*,code=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -1725,6 +1779,8 @@ class Diversao():
     class Avatar(commands.Cog):
         @commands.command(name='avatar')
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def avatar(self,ctx,user: discord.User=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -1733,6 +1789,8 @@ class Diversao():
     class servericon(commands.Cog):
         @commands.command(name='servericon')
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def servericon(self,ctx,guild: int=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -1747,6 +1805,8 @@ class Diversao():
     class calendario(commands.Cog):
         @commands.command()
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def calendario(self, ctx,ano:int,mes:int):
             if await bl(ctx.author.id) == True:
                 return
@@ -1754,6 +1814,8 @@ class Diversao():
     class dados(commands.Cog):
         @commands.command(aliases=['dado','dados'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def dice(self, ctx, dice):
             if await bl(ctx.author.id) == True:
                 return
@@ -1776,6 +1838,8 @@ class Diversao():
     class lol(commands.Cog):
         @commands.command()
         @commands.before_invoke(usou)
+        @commands.cooldown(1,120,commands.BucketType.guild)
+        @blacklists()
         async def lol(self, ctx, user: discord.User=None):
             if user == None:
                 file = ctx.message.attachments
@@ -1798,7 +1862,6 @@ class Diversao():
             discord.utils.get('poetico', bot.emojis)
     bot.add_cog(Anime(bot))
     bot.add_cog(lol(bot))
-
     bot.add_cog(dados(bot))
     bot.add_cog(calendario(bot))
     bot.add_cog(servericon(bot))
@@ -1806,7 +1869,6 @@ class Diversao():
     bot.add_cog(Avatar(bot))     
     bot.add_cog(Dog(bot))
     bot.add_cog(Art(bot))
-    #bot.add_cog(Run(bot))
     bot.add_cog(Fogo(bot))
     bot.add_cog(Gato(bot))
     bot.add_cog(Triste(bot))
@@ -1820,6 +1882,8 @@ class Economia():
     class Atm(commands.Cog):
         @commands.command(name='atm',aliases=['money','coin','coins','dinheiro','meudinheiro','mymoney'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def atm(self,ctx,user: discord.Member=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -1831,6 +1895,7 @@ class Economia():
         @commands.command(name='daily',aliases=['diaria','day'])
         @commands.cooldown(1,24000,commands.BucketType.member)
         @commands.before_invoke(usou)
+
         async def daily(self,ctx):
             if await bl(ctx.author.id) == True:
                 return
@@ -1848,6 +1913,8 @@ class Economia():
     class TopMoney(commands.Cog):
         @commands.command(name='topmoney',aliases=['rankdinheiro','rankcoin'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def topmoney(self,ctx,index:int=1):
             if await bl(ctx.author.id) == True:
                 return
@@ -1869,6 +1936,8 @@ class Economia():
     class Pay(commands.Cog):
         @commands.command(name='pay',aliases=['pagar'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def pay(self,ctx,user:discord.Member=None,dinheiro:int=1):
             if await bl(ctx.author.id) == True:
                 return
@@ -1892,6 +1961,8 @@ class Economia():
     class Giveway(commands.Cog):
         @commands.command(name='giveway',aliases=['sorteio','sortear'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def giveway(self,ctx,horario=None,num: int=1,*,message:str='Sorteio'):
             if await bl(ctx.author.id) == True:
                 return
@@ -1939,6 +2010,8 @@ class Economia():
     class Shop(commands.Cog):
         @commands.command(name='shop',aliases=['store','loja'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def shop(self,ctx, index: int=1):
             if await bl(ctx.author.id) == True:
                 return
@@ -2007,6 +2080,8 @@ class Economia():
     class Inventory(commands.Cog):
         @commands.command(name='inventory',aliases=['inventario','inv'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def inventory(self,ctx,index: int=1):
             if await bl(ctx.author.id) == True:
                 return
@@ -2086,6 +2161,8 @@ class Economia():
     class Comprar(commands.Cog):
         @commands.command(name='comprar',aliases=['buy'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def comprar(self,ctx,index=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -2150,6 +2227,8 @@ class Dev():
     class Repo(commands.Cog):
         @commands.command(name='repo', aliases=['repositorio'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def repo(self,ctx,author=None,nmrepo=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -2170,6 +2249,8 @@ class Dev():
     class Traduzir(commands.Cog):
         @commands.command(name='traduzir',aliases=['translate'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def traduzir(self,ctx,de=None,para=None,*,mensagem=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -2191,6 +2272,8 @@ class Dev():
     class Short(commands.Cog):
         @commands.command(name='short',aliases=['encurtador','link'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def short(self,ctx,link=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -2202,6 +2285,8 @@ class Dev():
     class QR(commands.Cog):
         @commands.command(name='qr',aliases=['qrcode'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def qr(self,ctx,link=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -2215,6 +2300,8 @@ class Dev():
     class hastebin(commands.Cog):
         @commands.command(name='hastebin')
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def hastebin(self,ctx,file='txt',*,code=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -2233,6 +2320,8 @@ class Dev():
             await ctx.reply(f':question: | **Aqui está o link:** https://hastebin.com/{key["key"]} ')             
     class att(commands.Cog):
         @commands.command(name='att')
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def att(self,ctx):
             if ctx.author.id not in devs:
                 return
@@ -2243,6 +2332,8 @@ class Dev():
             await ctx.reply("FASASASASASS")
     class teste(commands.Cog):
         @commands.command(name='teste')
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def teste(ctx):
             if await bl(ctx.author.id) == True:
                 return
@@ -2257,11 +2348,15 @@ class Dev():
     class ping(commands.Cog):
         @commands.group(name='ping',invoke_without_command=True)
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def ping(self,ctx):
             if await bl(ctx.author.id) == True:
                 return
             await ctx.reply(f":question: | **Minha látencia é: {int(bot.latency * 1000)}**")
         @ping.command(name='shard',aliases=['shards'])
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def shard(self,ctx):
             msg = f'[Quantidade total de SHARDS: {bot.shard_count} | ShardID do servidor: {ctx.guild.shard_id}]\n[ID|Ping|Está desligado?]'
             for i in bot.shards:
@@ -2271,6 +2366,8 @@ class Dev():
             await ctx.reply('```python\n'+msg+'\n```')
     class xko(commands.Cog):
         @commands.command(name='xko')
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def xko(self,ctx, user: discord.User,qnt):
             if ctx.author.id not in devs:
                 return
@@ -2280,6 +2377,8 @@ class Dev():
             await salvar(d,user.id)
     class _eval(commands.Cog):
         @commands.command()
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def eval(self,ctx,*,code):
             if ctx.author.id not in devs:
                 return
@@ -2309,6 +2408,8 @@ class Dev():
     class html(commands.Cog):
         @commands.command(name='html',aliases=['markdowntohtml'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def html(self,ctx,*,message):
             if await bl(ctx.author.id) == True:
                 return
@@ -2347,6 +2448,8 @@ class Dev():
     class invite(commands.Cog):
         @commands.command()
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def invite(self,ctx):
             if await bl(ctx.author.id) == True:
                 return
@@ -2355,6 +2458,8 @@ class Dev():
     class vote(commands.Cog):
         @commands.command()
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def vote(self, ctx):
             if await bl(ctx.author.id) == True:
                 return
@@ -2381,6 +2486,8 @@ class Dev():
     class regex(commands.Cog):
         @commands.command(name='regex',aliases=['re'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def regex(self,ctx,regex,*,string):
             if await bl(ctx.author.id) == True:
                 return
@@ -2408,6 +2515,8 @@ class Social():
     class Profile(commands.Cog):
         @commands.command(name='profile',aliases=['perfil'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def profile(self,ctx,user: discord.User=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -2462,9 +2571,12 @@ class Social():
                 arq = discord.File(open('pfout.png','rb'))#218 294
                 #261 112
             msg = await ctx.reply(file=arq)
+            arq.close()
     class Desc(commands.Cog):
         @commands.command(name='desc',aliases=['sobre-mim','sobre'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def desc(self,ctx,*,nova_desc=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -2485,6 +2597,8 @@ class Social():
     class Help(commands.Cog):
         @commands.command(name='help',aliases=['ajuda'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def help(self,ctx):
             if await bl(ctx.author.id) == True:
                 return
@@ -2495,6 +2609,8 @@ class Social():
         @commands.command(name='rep',aliases=['reputação'])
         @commands.cooldown(1,48000,BucketType.user)
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def rep(self,ctx,user: discord.User=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -2515,6 +2631,8 @@ class Social():
     class addBack(commands.Cog):
         @commands.command(name='addBack')
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def addBack(self,ctx):
             if await bl(ctx.author.id) == True:
                 return
@@ -2575,6 +2693,8 @@ class Social():
     class marry(commands.Cog):
         @commands.command(name='marry',aliases=['casar'])
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def marry(self,ctx,user:discord.Member=None):
             if await bl(ctx.author.id) == True:
                 return
@@ -2609,6 +2729,8 @@ class Social():
     class divorcio(commands.Cog):
         @commands.command(name='divorcio')
         @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
         async def divorcio(self,ctx):
             if await bl(ctx.author.id) == True:
                 return
@@ -2644,6 +2766,8 @@ class EventLog(commands.Cog):
     @commands.group(name='eventlog', aliases=['event','el'],invoke_without_command=True)
     @commands.has_permissions(administrator=True)
     @commands.before_invoke(usou)
+    @commands.cooldown(1,5,commands.BucketType.member)
+    @blacklists()
     async def eventlog(self,ctx,channel: discord.TextChannel=None):
         if await bl(ctx.author.id) == True:
                 return
@@ -2662,6 +2786,8 @@ class EventLog(commands.Cog):
             await salvarS(dados,ctx.guild.id)
     @eventlog.command(name='config')
     @commands.has_permissions(administrator=True)
+    @commands.cooldown(1,5,commands.BucketType.member)
+    @blacklists()
     async def Econfig(self,ctx,coisa=None):
         if coisa == None:
             await ctx.reply(":question: | **Aqui está um mini guia!, para ativar uma opção use o comando `.eventlog config <nome da config>` e para desativar use o comando novamente!**\n`newmemb` -> Avisa quando um membro entrar e quando um membro for desbanido\n`leftmemb` -> Avisa quando um membro saiu ou foi banido\n`msgdel` -> Avisa quando uma mensagem for apagada\n`editmsgs` -> Avisa quando uma mensagem for editada\n\nUm exemplo de como ativar uma opção: `.eventlog config leftmemb` e para desativar um comando é só usar o comando novamente")
@@ -2681,12 +2807,16 @@ class EventLog(commands.Cog):
         except Exception as ex:await ctx.reply(ex.args)
     @eventlog.command(name='painel')
     @commands.has_permissions(administrator=True)
+    @commands.cooldown(1,5,commands.BucketType.member)
+    @blacklists()
     async def painel(self,ctx):
         d = await Dados(ctx.guild.id)
         try:await ctx.reply(f"Painel do eventlog\n\n**Entrada de membro**: {d['config']['eventlog']['newmemb']}\n**Saida de membro**: {d['config']['eventlog']['leftmemb']}\n**Mensagem editadas**: {d['config']['eventlog']['editmsgs']}\n**Mensagens apagadas**: {d['config']['eventlog']['msgdel']}")
         except: await ctx.reply(":x: | **Você não ativou o event log, para ativar use `.eventlog`**")
     @commands.has_permissions(administrator=True)
     @eventlog.command(name='desativar')
+    @commands.cooldown(1,5,commands.BucketType.member)
+    @blacklists()
     async def desativ(self,ctx):
         d = await Dados(ctx.guild.id)
         try:
@@ -2696,4 +2826,4 @@ class EventLog(commands.Cog):
         except:
             await ctx.reply(":x: | **Você não ativou o event log, para ativar use `.eventlog`**")
 bot.add_cog(EventLog(bot))
-bot.run(config['token'])
+bot.run(config['token2'])
