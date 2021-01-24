@@ -216,16 +216,12 @@ def blacklists():
     def checar(ctx):
         try:
             if blacklist.find({"_id":id})[0]['blacklisted'] == True:
-                print('YEah')
                 return False
             else:
-                print('YEah d')
                 return True
 
-        except Exception as ex:
-            print('YEahdsa')    
+        except Exception as ex: 
             return True
-            
     return commands.check(checar)
 def blackli(id:int, temp:int):
     blacklist.insert_one({'_id':id, "blacklisted":True,"time":datetime.datetime.now() + delt(seconds=temp)})
@@ -461,13 +457,13 @@ class events(commands.Cog):
                 colDown[ctx.author.id][ctx.command.name]['vz'] += 1
                 error.cooldown.per += 10
                 if colDown[ctx.author.id][ctx.command.name]['vz'] == 3:
-                    await ctx.send(f":x: | **É melhor você parar... {int(error.retry_after)} segundos para o cooldown terminar**")
+                    await ctx.send(f":x: | **É melhor você parar... {int(error.retry_after)} segundos para o cooldown terminar** | 1 Tentativa restante")
                     return
                 elif colDown[ctx.author.id][ctx.command.name]['vz'] == 4:
-                    await ctx.send(f":x: | **Você pediu... Sua conta foi banida de usar o SphyX por 7 Dias...**")
-                    blackli(ctx.author.id,1512000) #
+                    await ctx.send(f":x: | **Você pediu... Sua conta foi banida de usar o SphyX por 3 Dias...**")
+                    blackli(ctx.author.id,648000) #
                     return
-                if colDown[ctx.author.id][ctx.command.name]['vz'] == 2:await ctx.send(f":x: | **Não fique usando comandos no cooldown, agora espere {int(error.retry_after)} segundos pra usar denovo**")
+                if colDown[ctx.author.id][ctx.command.name]['vz'] == 2:await ctx.send(f":x: | **Não fique usando comandos no cooldown, agora espere {int(error.retry_after)} segundos pra usar denovo** | 2 Tentativas restantes")
                 else: await ctx.send(f":x: | **Espere {int(error.retry_after)} segundos para você usar o comando novamente**")
         elif isinstance(error, CommandNotFound):
             return
