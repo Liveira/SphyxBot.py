@@ -2842,4 +2842,4 @@ class EventLog(commands.Cog):
         except:
             await ctx.send(":x: | **Você não ativou o event log, para ativar use `.eventlog`**")
 bot.add_cog(EventLog(bot))
-bot.run(config['token2'])
+bot.run(config['token'])
