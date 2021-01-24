@@ -1,3 +1,11 @@
+'''
+          SPHYXBOT
+ TODOS OS DIREITOS RESEVADOS
+  MIT LICENSE 2020 - 2021
+      LIVEIRA;DREAMCAT
+
+
+'''
 import asyncio
 from io import *
 import contextlib,re
