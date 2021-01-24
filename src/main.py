@@ -459,6 +459,7 @@ class events(commands.Cog):
 
                 colDown[ctx.author.id][ctx.command.name]['vz'] += 1
                 error.cooldown.per += 10
+                error.retry_after += 10
             if error.cooldown.per >= 50:
                 try:
                     blackli(ctx.author.id,648000)
