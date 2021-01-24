@@ -1,0 +1,16 @@
+discord.py
+qrcode
+mal-api
+osuapi
+dpymenus
+dblpy
+pyshorteners
+pymongo
+pillow
+requests
+dnspython
+PyNaCl
+markdown
+GrabzIt
+python-dateutil
+get-stick-bugged-lol
