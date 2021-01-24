@@ -23,7 +23,7 @@ from PIL import ImageFont as imgfont
 from PIL import ImageDraw as imgdraw
 from PIL import ImageOps
 from discord.ext import commands,tasks
-from discord.ext.commands.errors import BotMissingPermissions, ChannelNotFound, ChannelNotReadable, CommandInvokeError, CommandOnCooldown, MemberNotFound, MissingPermissions, RoleNotFound, UserNotFound
+from discord.ext.commands.errors import BotMissingPermissions, ChannelNotFound, ChannelNotReadable, CommandInvokeError, CommandNotFound, CommandOnCooldown, EmojiNotFound, MemberNotFound, MissingPermissions, RoleNotFound, UserNotFound
 from discord.flags import Intents
 from dpymenus import Page, PaginatedMenu
 from requests.api import request
@@ -81,9 +81,16 @@ def prefix(bot,message):
     for i in x:
         lis.append(i)
     return commands.when_mentioned_or(*lis[0]['prefix'])(bot, message)
-bot = commands.AutoShardedBot(command_prefix='!a',case_insensitive=True,intents=intents)
+bot = commands.AutoShardedBot(command_prefix=prefix,case_insensitive=True,intents=intents)
 bot.remove_command('help')
 epoch = datetime.datetime.utcfromtimestamp(0)
+@tasks.loop(seconds=30)
+async def blCheck():
+    global blacklist
+    for i in blacklist.find():
+        if datetime.datetime.now() >= i['time']:
+            blacklist.delete_one({"_id":i['_id']})
+blCheck.start()
 @bot.event
 async def on_ready():
     await outroloop()
@@ -124,7 +131,7 @@ async def GCConta(guild: discord.Guild):
 async def loga(message):
     channel = bot.get_channel(785611411043647578)
     await channel.send('**L O G**\n' + message)   
-async def loop():   
+async def loop():
     while True:
         await asyncio.sleep(60)
         cont=0
@@ -197,7 +204,7 @@ async def bl(id:int):
 async def usou(self,ctx):
     channel = bot.get_channel(785611411043647578)
     await channel.send(embed=discord.Embed(title=ctx.message.guild.name).add_field(name='Quem mandou?',value=ctx.message.author.name).add_field(name='Chat da mensagem',value=ctx.message.channel).add_field(name='Comando',value=ctx.message.content).set_thumbnail(url=ctx.message.author.avatar_url))
-def blacklist():
+def blacklists():
     def checar(ctx):
         try:
             if blacklist.find({"_id":id})[0]['blacklisted'] == True:
@@ -207,6 +214,8 @@ def blacklist():
         except Exception as ex:
             return False
     return commands.check(checar)
+def blackli(id:int, temp:int):
+    blacklist.insert_one({'_id':id, "blacklisted":True,"time":datetime.datetime.now() + delt(seconds=temp)})
 class events(commands.Cog): 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -260,7 +269,7 @@ class events(commands.Cog):
         user={}
         lista=[]
         fi = False
-        if str(guild.id) in await listallservers():
+        if guild.id in await listallservers():
             await use.send("Pelo que eu vi aqui parece que eu já entrei nesse servidor, todas as configurações que estavam antes foram aplicados agora...")
             return
         await GCConta(guild)
@@ -432,7 +441,8 @@ class events(commands.Cog):
         elif isinstance(error, BotMissingPermissions):
             await ctx.reply(":x: | **Eu não tenho permissões para fazer isso...**")
         elif isinstance(error, CommandOnCooldown):
-            if ctx.author.id not in colDown:
+            if ctx.command.name == 'daily':return
+            elif ctx.author.id not in colDown:
                 colDown[ctx.author.id] = {ctx.command.name:{'es':datetime.datetime.now() + delt(seconds=error.retry_after),'vz':0}}
             else:
                 colDown[ctx.author.id][ctx.command.name]['vz'] += 1
@@ -442,10 +452,14 @@ class events(commands.Cog):
                     return
                 elif colDown[ctx.author.id][ctx.command.name]['vz'] == 4:
                     await ctx.send(f":x: | **Você pediu... Sua conta foi banida de usar o SphyX por 7 Dias...**")
-                    blacklist.insert_one({'_id':ctx.author.id, "blacklisted":True})
+                    blackli(ctx.author.id,10) #1512000
                     return
                 if colDown[ctx.author.id][ctx.command.name]['vz'] == 2:await ctx.send(f":x: | **Não fique usando comandos no cooldown, agora espere {int(error.retry_after)} segundos pra usar denovo**")
                 else: await ctx.send(f":x: | **Espere {int(error.retry_after)} segundos para você usar o comando novamente**")
+        elif isinstance(error, CommandNotFound):
+            return
+        elif isinstance(error, EmojiNotFound):
+            await ctx.reply(":x: | **Eu não encontrei esse emoji")
         else:
             await ctx.send(f":x: | **Aconteceu um erro inesperado...** ```{error.args}```Você pode reportar esse erro no servidor de suporte...")
 bot.add_cog(events(bot))
@@ -617,23 +631,18 @@ class Moderacao():
                 pass
             else:
                 tim = int(re.search("^([0-9]+[1-6]*)([smhd])$",tempoMute).group(1))
-                d = re.search("^([0-6]+)([smhd])$",tempoMute).group(2)
-                ti = {""}
-                if d == 's':
-                    time = tim
-                elif d == 'm':
-                    time = tim * 60
-                elif d == 'h':
-                    time = tim * 60 * 60
-                elif d == 'd':
-                    time = tim * 60 * 60 * 60
+                d = re.search("^([0-9]+[1-6]*)([smhd])$",tempoMute).group(2)
+                ti = {"s":1,"m":60,"h":60*60,"d":60*60*60}
+                try:
+                    time = tim * ti[d]
+                except KeyError:
+                    await ctx.send(":x: | **Formato invalido... Formatos corrretos: [ s | m | d | h ] / 10d -> 10 Dias**")
             if tempoMute == None:
                 await user.add_roles(role)
                 await ctx.reply(f":question: | **O Usuario: {user.name} foi mutado por um tempo inderterminado, motivo: {motivo}**")
                 if dados['config']['dmpu'] == 1:
                     try:await user.send(f"Você está **Mutado** por tempo inderteminado, motivo: {motivo}")                        
-                    except:await ctx.reply(":x: | Erro ao mandar mensagem na DM: **DM Bloqueada**")
-                
+                    except:await ctx.reply(":x: | Erro ao mandar mensagem na DM: **DM Bloqueada**")           
             await user.add_roles(role)
             cont=0 
             await ctx.reply(f":question: | **O Usuario: {user.name} foi mutado por {ant}, motivo: {motivo}**")
@@ -1363,7 +1372,7 @@ class Config():
                 log = log + "\n" + f"LEAVE_CHANNEL Alterado para {novo_canal.name} no servidor {ctx.guild.name}"
                 await ctx.reply(f":question:  | **Canal alterado para {novo_canal}**")
     bot.add_cog(config(bot))
-class RR():
+class RR(): 
     class ReactionRoles(commands.Cog):
         @commands.group(name='rr',aliases=['reactionroles'],invoke_without_command=True) 
         @commands.has_permissions(manage_roles=True)
