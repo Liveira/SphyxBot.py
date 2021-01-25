@@ -3,8 +3,6 @@
  TODOS OS DIREITOS RESEVADOS
   MIT LICENSE 2020 - 2021
       LIVEIRA;DREAMCAT
-
-
 '''
 import asyncio
 from io import *
@@ -40,7 +38,6 @@ import dbl
 import pyshorteners
 import qrcode,pymongo
 import markdown
-from gsbl.stick_bug import StickBug
 intents = intents = discord.Intents.all()
 log = ""
 ultimafoto={}
@@ -2843,4 +2840,4 @@ class EventLog(commands.Cog):
         except:
             await ctx.send(":x: | **Você não ativou o event log, para ativar use `.eventlog`**")
 bot.add_cog(EventLog(bot))
-bot.run(config['token'])
+bot.run(config['token2'])
