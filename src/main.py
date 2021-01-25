@@ -1053,8 +1053,21 @@ class Moderacao():
         @commands.group(name='clean')
         async def clean(self, ctx):
             await padrao(ctx,'Moderação','clean','OBS: **Essa função é extremamente perigosa! Use com cuidado** | Essa função limpa algo que você especificou por exemplo, `.clean channels remove` <- Nesse caso ele vai remover todos os canais e isso funciona com todas as funções como emojis, canais e cargos facilitando a vida!')'''
+    class clear(commands.Cog):
+        @commands.command()
+        @commands.has_permissions(manage_channels=True)
+        @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
+        async def clear(self,ctx,num:int=None):
+            if num == None:
+                await ctx.send(":x: | **Você esqueceu de colocar a quantidade de mensagens**")
+            else:
+                d = await ctx.channel.purge(limit=num)
+                await ctx.send(f":question: | **{len(d)} menssagens foram apagadas**")
     bot.add_cog(emojiinfo(bot))
     bot.add_cog(lock(bot))
+    bot.add_cog(clear(bot))
     bot.add_cog(addEmoji(bot))
     bot.add_cog(unlock(bot))
     bot.add_cog(warn(bot))
