@@ -2282,20 +2282,12 @@ class Dev():
             if await bl(ctx.author.id) == True:
                 return
             if de == None:
-                await ctx.send(":x: | **Você fez do jeito incorreto, como usar: `.traduzir PtBr EnUs Olá mundo!` <- De português para inglês ou `.traduzir EnUs PtBr Hello World!` de inglês para português!**")
-                return
-            url = 'https://api.gotit.ai/Translation/v1.1/Translate'
-            data = {"T":mensagem,"SL":de,"TL":para}
-            data_json = json.dumps(data)
-            userAndPass = base64.b64encode(b"2002-WaC/7LOO:RVJzQ3qynPtWLKH14JpWZ11PDaTyGZgPur+n5S/TdQwc").decode("ascii")
-            headers = {'Content-type': 'application/json', "Authorization": "Basic %s" %  userAndPass}
-            response = requests.post(url, data=data_json, headers=headers)
-            if response.status_code != 200:
-                print(response.status_code)
-                await ctx.send(":x: | **Você fez do jeito incorreto, como usar: `.traduzir PtBr EnUs Olá mundo!` <- De português para inglês ou `.traduzir EnUs PtBr Hello World!` de inglês para português!")
-                return
-            js = response.json()
-            await ctx.send(f'Texto traduzido: {js["result"]}') 
+                try:
+                    RE = Translator(from_lang=de,to_lang=para)
+                except:
+                    await ctx.send(":x: | **Me desculpe, mas eu não consegui traduzir esse texto**")
+                    return
+                await ctx.send(f'Texto traduzido: {RE.translate(mensagem)}') 
     class Short(commands.Cog):
         @commands.command(name='short',aliases=['encurtador','link'])
         @commands.before_invoke(usou)
