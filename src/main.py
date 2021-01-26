@@ -295,8 +295,13 @@ class events(commands.Cog):
             users.insert_many(lista)
         await bot.change_presence(activity=discord.Game(name=f".help | Eu estou em {len(bot.guilds)} servidores e {len(bot.users)} Usuários!", type=1))
     @commands.Cog.listener()
-    async def on_member_join(self,member):
+    async def on_member_join(self,member: discord.Member):
         dados = await Dados(member.guild.id)
+        try:
+            if (datetime.datetime.now() - delt(days=1) - member.created_at).days*-1 <= dados['antialt']['day']:
+                await member.ban()
+                return
+        except:pass
         for i in dados['config']['autorole']:
             role = member.guild.get_role(dados['config']['autorole'][i]['roleid'])
             await member.add_roles(role)
@@ -321,7 +326,7 @@ class events(commands.Cog):
         if evt['chid'] != None:
             if evt['newmemb']:
                 ch: GuildChannel = bot.get_guild(member.guild.id).get_channel(evt['chid'])
-                embed = discord.Embed(title=f'Novo membro {member.author.name}.')
+                embed = discord.Embed(title=f'Novo membro {member.name}.')
                 embed.add_field(name='Membro', value=member.name)
                 embed.timestamp = datetime.datetime.now()
                 embed.set_thumbnail(url=member.author.avatar_url)
@@ -341,7 +346,7 @@ class events(commands.Cog):
         if evt['chid'] != None:
             if evt['leftmemb']:
                 ch: GuildChannel = bot.get_guild(member.guild.id).get_channel(evt['chid'])
-                embed = discord.Embed(title=f'O Membro {member.author.name} saiu.')
+                embed = discord.Embed(title=f'O Membro {member.name} saiu.')
                 embed.add_field(name='Membro', value=member.name)
                 embed.timestamp = datetime.datetime.now()
                 embed.set_thumbnail(url=member.avatar_url)
@@ -1086,7 +1091,7 @@ class Moderacao():
                 dados = await Dados(ctx.guild.id)
                 try:
                     for i in dados['tag']:
-                        msg += dados['tag'][i]['nome']+" - " 
+                        msg += f"{', ' if msg != '' else ''}{dados['tag'][i]['nome']}"
                     await ctx.send('```\n'+msg+'\n```')
                 except Exception as ex:
                     print(ex.args)
@@ -1111,24 +1116,77 @@ class Moderacao():
         @tag.command(name='add',aliases=['adicionar'])
         @commands.before_invoke(usou)
         @commands.cooldown(1,5,commands.BucketType.member)
+        @commands.has_permissions(manage_roles=True)
         @blacklists()
         async def add(self,ctx,nomeTag,requisitos: discord.Role=None):
+            if ctx.guild.me.guild_permissions.manage_roles == False:
+                await ctx.send(":x: | **Não posso ativar essa opção por falta de permissões, preciso de pemissão de gerenciar cargos para ativar essa opção**")
+                return
             dados = await Dados(ctx.guild.id)
             try:
+                if nomeTag in dados['tag']:
+                    await ctx.send(":x: | **Tag já existente**")
+                    return
                 dados['tag'][nomeTag] = {
                     'nome':nomeTag,
-                    'req':requisitos.id 
+                    'req':requisitos.id if requisitos != None else 0 
                 }
             except KeyError:
                 dados['tag'] = {}
                 dados['tag'][nomeTag] = {
                     'nome':nomeTag,
-                    'req':requisitos.id 
+                    'req':requisitos.id if requisitos != None else 0
                 }
             await ctx.guild.create_role(name=nomeTag)
             await ctx.send(f":question: | **Tag adicionada!**\nNome: **{nomeTag}**\nRequisitos: **{'Nenhum' if requisitos == None else requisitos.name}**")
             await salvarS(dados,ctx.guild.id)
+        @tag.command(name='remove',aliases=['remover'])
+        @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @commands.has_permissions(manage_roles=True)
+        @blacklists()
+        async def remove(self,ctx,nomeTag):
+            d = await Dados(ctx.guild.id)
+            try:
+                try:
+                    del d['tag'][nomeTag]
+                    await salvarS(d,ctx.guild.id)
+                    await ctx.send(":question: | **Tag removida**")
+                except KeyError:await ctx.send(":x: | **Essa tag não existe**")
+            except KeyError: await ctx.send(":x: | **O servidor ainda não ativou as Tags!**")
+    class antialt(commands.Cog):
+        @commands.command(name='antialt')
+        @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @commands.has_permissions(manage_roles=True)
+        @blacklists()
+        async def antialt(self,ctx,dias_de_conta=10):
+            dados = await Dados(ctx.guild.id)
+            try:
+                if dados['antialt'] != {}:
+                    dados['antialt'] = {}
+                    await salvarS(dados,ctx.guild.id)  
+                    await ctx.send(":question: | **O antialt foi desligado**")
+                else:
+                    if ctx.guild.me.guild_permissions.ban_members == False:
+                        await ctx.send(":x: | **Não posso ativar essa opção por falta de permissões, preciso de pemissão de banir membros para ativar essa opção**")
+                        return
+                    dados['antialt'] = {
+                    "day":dias_de_conta
+                    }
+                    await salvarS(dados,ctx.guild.id)
+                    await ctx.send(f":question: | **Todas as contas com menos de {dias_de_conta} dias de criação serão banidos!**")
+            except:
+                if ctx.guild.me.guild_permissions.ban_members == False:
+                    await ctx.send(":x: | **Não posso ativar essa opção por falta de permissões, preciso de pemissão de banir membros para ativar essa opção**")
+                    return
+                dados['antialt'] = {
+                    "day":dias_de_conta
+                }
+                await salvarS(dados,ctx.guild.id)
+                await ctx.send(f":question: | **Todas as contas com menos de {dias_de_conta} dias de criação serão banidos!**")
     bot.add_cog(emojiinfo(bot))
+    bot.add_cog(antialt(bot))
     bot.add_cog(lock(bot))
     bot.add_cog(clear(bot))
     bot.add_cog(tag(bot))
@@ -2404,7 +2462,7 @@ class Dev():
             key = json.loads(req.content)   
             await ctx.send(f':question: | **Aqui está o link:** https://hastebin.com/{key["key"]} ')             
     class att(commands.Cog):
-        @commands.command(name='att')
+        @commands.command(name='att',hidden=True)
         @commands.cooldown(1,5,commands.BucketType.member)
         @blacklists()
         async def att(self,ctx):
@@ -2416,7 +2474,7 @@ class Dev():
             users.insert_many(a)
             await ctx.send("FASASASASASS")
     class teste(commands.Cog):
-        @commands.command(name='teste')
+        @commands.command(name='teste',hidden=True)
         @commands.cooldown(1,5,commands.BucketType.member)
         @blacklists()
         async def teste(ctx):
@@ -2450,7 +2508,7 @@ class Dev():
             
             await ctx.send('```python\n'+msg+'\n```')
     class xko(commands.Cog):
-        @commands.command(name='xko')
+        @commands.command(name='xko',hidden=True)
         @commands.cooldown(1,5,commands.BucketType.member)
         @blacklists()
         async def xko(self,ctx, user: discord.User,qnt):
@@ -2461,7 +2519,7 @@ class Dev():
             await ctx.send(f"{random.randrange(10,100000)}")
             await salvar(d,user.id)
     class _eval(commands.Cog):
-        @commands.command()
+        @commands.command(hidden=True)
         @commands.cooldown(1,5,commands.BucketType.member)
         @blacklists()
         async def eval(self,ctx,*,code):
@@ -2550,7 +2608,7 @@ class Dev():
                 return
             await ctx.send("Vote em mim! https://top.gg/bot/782737686238461952/vote")
     class ocr(commands.Cog):
-        @commands.command(name='ocr',aliases=['digitalizar'])
+        @commands.command(name='ocr',aliases=['digitalizar'],hidden=True)
         async def ocr(self,ctx: commands.Context):
             return
             '''atch: Message = ctx.message
@@ -2707,6 +2765,7 @@ class Social():
             acr = 20
             emb = discord.Embed(title='Ajuda clássico...')
             for i in bot.commands:
+                if i.hidden:pass
                 inc += 1
                 s += f"\n{inc} - {i.name}"
                 if inc >= acr:
@@ -2938,4 +2997,4 @@ class EventLog(commands.Cog):
         except:
             await ctx.send(":x: | **Você não ativou o event log, para ativar use `.eventlog`**")
 bot.add_cog(EventLog(bot))
-bot.run(config['token2'])
+bot.run(config['token'])
