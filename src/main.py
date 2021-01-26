@@ -1075,9 +1075,63 @@ class Moderacao():
             else:
                 d = await ctx.channel.purge(limit=num)
                 await ctx.send(f":question: | **{len(d)} menssagens foram apagadas**")
+    class tag(commands.Cog):
+        @commands.group(name='tag',aliases=['tags'],invoke_without_command=True)
+        @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
+        async def tag(self,ctx,tagName=None):
+            if tagName == None:
+                msg = ""
+                dados = await Dados(ctx.guild.id)
+                try:
+                    for i in dados['tag']:
+                        msg += dados['tag'][i]['nome']+" - " 
+                    await ctx.send('```\n'+msg+'\n```')
+                except Exception as ex:
+                    print(ex.args)
+                    await ctx.send(":x: | **Esse servidor não possui a função de TAGS...** Peça para um administrador usar o comando `.tags add`!")
+            else:
+                try:
+                    dados = await Dados(ctx.guild.id)
+                    if dados['tag'][tagName]['req'] == None:
+                        rol = discord.utils.get(ctx.guild.roles,name=tagName)
+                        await ctx.author.add_roles(rol)
+                        await ctx.send(":question: | **Tag adicionada**")
+                    else:      
+                        role = ctx.guild.get_role(dados['tag'][tagName]['req'])
+                        if role in ctx.author.roles:
+                            rol = discord.utils.get(ctx.guild.roles,name=tagName)
+                            await ctx.author.add_roles(rol)
+                            await ctx.send(":question: | **Tag adicionada**")
+                        else:
+                            await ctx.send(f":x: | **Você não cumpre os requisitos! Você precisa ter o cargo `{role.name}`**")
+                except Exception as ex:
+                    await ctx.send(":x: | **Tag invalida**")
+        @tag.command(name='add',aliases=['adicionar'])
+        @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
+        async def add(self,ctx,nomeTag,requisitos: discord.Role=None):
+            dados = await Dados(ctx.guild.id)
+            try:
+                dados['tag'][nomeTag] = {
+                    'nome':nomeTag,
+                    'req':requisitos.id 
+                }
+            except KeyError:
+                dados['tag'] = {}
+                dados['tag'][nomeTag] = {
+                    'nome':nomeTag,
+                    'req':requisitos.id 
+                }
+            await ctx.guild.create_role(name=nomeTag)
+            await ctx.send(f":question: | **Tag adicionada!**\nNome: **{nomeTag}**\nRequisitos: **{'Nenhum' if requisitos == None else requisitos.name}**")
+            await salvarS(dados,ctx.guild.id)
     bot.add_cog(emojiinfo(bot))
     bot.add_cog(lock(bot))
     bot.add_cog(clear(bot))
+    bot.add_cog(tag(bot))
     bot.add_cog(addEmoji(bot))
     bot.add_cog(unlock(bot))
     bot.add_cog(warn(bot))
@@ -2434,7 +2488,7 @@ class Dev():
                     resultado = f"\n{obj}\n"
             except Exception as e:
                 resultado = f"ERRO: {e.args}"
-            await ctx.send(embed=discord.Embed(title=':inbox_tray: **Entrada**',description=f'```python\n{code}\n```'))    
+            await ctx.send(embed=discord.Embed(title=':inbox_tray: **Entrada**',description=f'```python\n{code}\n```'))   
             await ctx.send(embed=discord.Embed(title=':outbox_tray: **Saida**',description='```python\n'+str(resultado)+'```'))        
     class html(commands.Cog):
         @commands.command(name='html',aliases=['markdowntohtml'])
@@ -2636,6 +2690,33 @@ class Social():
             embed = discord.Embed(title=f'Olá {str(ctx.author)}!',description='**Parece que você precisa de ajuda...\n**\n**Quer ver meus comandos?**\n\a [Comandos](https://sphyx-6ffe7.web.app/pages/comandos.html)\n\a [TopGG](https://top.gg/bot/782737686238461952)\n\n**Está com alguma dúvida?**\n\a [FAQ](https://sphyx-6ffe7.web.app/pages/FAQ.html)\n\a [Server do discord](https://discord.gg/CG7spnTsKa)')
             embed.set_footer(text=f'{ctx.author.name} usou as {str(time.strftime("%H:%M", time.localtime()))}',icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
+        @commands.command(name='helpclassic',aliases=['ajudaclassico'])
+        @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
+        async def helpclassic(self,ctx, name=None):    
+            if name != None:
+                command: commands.Command() = bot.get_command(name)
+                if command == None:
+                    pass
+                else:
+                    await ctx.send(embed=discord.Embed(title=f'Comando {command.name}').add_field(name='Outros nomes',value='-> ' + str(command.aliases).replace('['," ").replace(']'," ").replace("'",' ')).add_field(name='Como usar',value=command.brief))
+                    return
+            s = ""
+            inc = 0
+            acr = 20
+            emb = discord.Embed(title='Ajuda clássico...')
+            for i in bot.commands:
+                inc += 1
+                s += f"\n{inc} - {i.name}"
+                if inc >= acr:
+                    emb.add_field(name='.../',value=s)
+                    s = ""
+                    acr += 20
+                elif inc >= len(bot.commands):
+                    emb.add_field(name='.../',value=s)
+            
+            await ctx.send(embed=emb)
     class Rep(commands.Cog):
         @commands.command(name='rep',aliases=['reputação'])
         @commands.cooldown(1,48000,BucketType.user)
@@ -2857,4 +2938,4 @@ class EventLog(commands.Cog):
         except:
             await ctx.send(":x: | **Você não ativou o event log, para ativar use `.eventlog`**")
 bot.add_cog(EventLog(bot))
-bot.run(config['token'])
+bot.run(config['token2'])
