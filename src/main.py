@@ -38,6 +38,7 @@ import dbl
 import pyshorteners
 import qrcode,pymongo
 import markdown
+#from translate import Translator
 intents = intents = discord.Intents.all()
 log = ""
 ultimafoto={}
@@ -790,13 +791,15 @@ class Moderacao():
                     return
                 rol = guild.roles
                 for i in rol:
+                    if len(fi) > 1900:break
                     fi = fi + " @" + i.name
             else:
                 guild = ctx.guild
                 rol = guild.roles
                 for i in rol:
+                    if len(fi) > 1900:break
                     fi = fi + " " + i.mention
-            if len(fi) > 1900 : fi=fi[:1900]
+            
             bots=0
             users=0
             while True:
@@ -816,12 +819,14 @@ class Moderacao():
 
                     m = await ctx.send(':x: | **Tempo Excedido**')
                     await asyncio.sleep(5)
-                    await m.delete()
+                    try:await m.delete()
+                    except:pass
                     await msgA.delete()    
                     return
                 if msg.content.lower() == "1":
                     await msgA.delete()
-                    await msg.delete()
+                    try:await msg.delete()
+                    except:pass
                     msg=""
                     for d in guild.premium_subscribers: msg = msg +"\n **"+ str(d) + '**'
                     embed = discord.Embed(title=f'Informações do servidor {guild.name} | Pagina 2',description=f'Boosters:\n{msg}')
@@ -833,21 +838,25 @@ class Moderacao():
                             pass
                         elif msg.content.lower() == '2':
                             await ma.delete()
-                            await msg.delete()
+                            try:await msg.delete()
+                            except:pass
                             em = ''
-                            for i in guild.emojis: em = em + ' ' + str(i)
-                            if len(em) > 1900: em = em[:1900]
+                            for i in guild.emojis:
+                                if len(em) > 1900:break
+                                em = em + ' ' + str(i)
                             embed = discord.Embed(title=f'Informações do servidor {guild.name} | Pagina 3',description=f'Emojis: \n{em}')
                             embed.set_footer(text='Digite "voltar" para voltar ou digite "3" para avançar')
                             mi = await ctx.send(embed=embed)
                             try:
                                 msg = await bot.wait_for('message', check=check(ctx.author,["voltar","3"]), timeout=10)
                                 if msg.content.lower() == 'voltar':
-                                    await msg.delete()
+                                    try:await msg.delete()
+                                    except:pass
                                     await mi.delete()
                                     pass
                                 elif msg.content.lower() == '3':
-                                    await msg.delete()
+                                    try:await msg.delete()
+                                    except:pass
                                     await mi.delete()
                                     embed = discord.Embed(title=f'Informações do servidor {guild.name} | Pagina 4',description=f'Cargos: \n{fi}')
                                     embed.set_footer(text='Digite "voltar" para voltar')
@@ -855,7 +864,8 @@ class Moderacao():
                                     try:
                                         msg = await bot.wait_for('message', check=check(ctx.author,["voltar"]), timeout=10)
                                         if msg.content.lower() == 'voltar':
-                                            await msg.delete()
+                                            try:await msg.delete()
+                                            except:pass
                                             await mo.delete()
                                             pass
                                     except asyncio.TimeoutError:
@@ -2273,21 +2283,23 @@ class Dev():
                 embed.set_image(url=rep['owner']['avatar_url'])
                 embed.set_footer(text=f'Criado em {rep["created_at"]}',icon_url='https://cdn.discordapp.com/emojis/786911257596133426.png?v=1')
                 await ctx.send(embed=embed)
-    class Traduzir(commands.Cog):
+    '''class Traduzir(commands.Cog):
         @commands.command(name='traduzir',aliases=['translate'])
         @commands.before_invoke(usou)
         @commands.cooldown(1,5,commands.BucketType.member)
         @blacklists()
         async def traduzir(self,ctx,de=None,para=None,*,mensagem=None):
             if await bl(ctx.author.id) == True:
+                print("ALO")
                 return
-            if de == None:
+            if de != None:
                 try:
+                    print("ALO")
                     RE = Translator(from_lang=de,to_lang=para)
                 except:
                     await ctx.send(":x: | **Me desculpe, mas eu não consegui traduzir esse texto**")
                     return
-                await ctx.send(f'Texto traduzido: {RE.translate(mensagem)}') 
+                await ctx.send(f'Texto traduzido: {RE.translate(mensagem)}') '''
     class Short(commands.Cog):
         @commands.command(name='short',aliases=['encurtador','link'])
         @commands.before_invoke(usou)
@@ -2455,10 +2467,10 @@ class Dev():
                     fi = mk
                     hml = '<!DOCTYPE html>\n<html>\n\t<head>\n\t\t<meta charset="utf-8">\n\t\t<meta name="viewport" content="width=800 height=600">\n\t\t<title>a</title>\n\t\t<style>\n\t\t\tbody{\n\t\t\t\tbackground-color: black;\n\t\t\t}\n\t\t\ttext{\n\t\t\t\tfont-size: 38px;\n\t\t\t\tcolor: white;\n\t\t\t\tfont-family: Arial, Helvetica, sans-serif;\n\t\t\t\ttext-indent: 50px;\n\t\t\t}\n\t\t\t</style>\n\t</head>\n\t<body>\n\t<text>\n'+fi+'\n\t</text>\n\t</body>\n</html>'
                     options = GrabzItImageOptions.GrabzItImageOptions()
-                    options.format = "png"
+                    options.format = "jpg"
                     grabzIt.HTMLToImage(hml, options)
-                    grabzIt.SaveTo("result.png")
-                    f = discord.File('result.png')
+                    grabzIt.SaveTo("result.jpg")
+                    f = discord.File('result.jpg')
                     await ctx.send(file=f)
                     await msg.delete()
                     await ctx.author.send(f"Entrada...```html\n{hml}\n```")
@@ -2529,7 +2541,7 @@ class Dev():
     bot.add_cog(QR(bot))
     bot.add_cog(Short(bot))
     bot.add_cog(Repo(bot))
-    bot.add_cog(Traduzir(bot))
+    #bot.add_cog(Traduzir(bot))
 class Social():
     class Profile(commands.Cog):
         @commands.command(name='profile',aliases=['perfil'])
@@ -2845,4 +2857,4 @@ class EventLog(commands.Cog):
         except:
             await ctx.send(":x: | **Você não ativou o event log, para ativar use `.eventlog`**")
 bot.add_cog(EventLog(bot))
-bot.run(config['token2'])
+bot.run(config['token'])
