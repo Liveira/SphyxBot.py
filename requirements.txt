@@ -14,3 +14,4 @@ markdown
 GrabzIt
 python-dateutil
 get-stick-bugged-lol
+discloud

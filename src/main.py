@@ -38,6 +38,7 @@ import dbl
 import pyshorteners
 import qrcode,pymongo
 import markdown
+import discloud
 #from translate import Translator
 intents = intents = discord.Intents.all()
 log = ""
@@ -298,8 +299,9 @@ class events(commands.Cog):
     async def on_member_join(self,member: discord.Member):
         dados = await Dados(member.guild.id)
         try:
-            if (datetime.datetime.now() - delt(days=1) - member.created_at).days*-1 <= dados['antialt']['day']:
-                await member.ban()
+            if (datetime.datetime.now() - delt(days=1) - member.created_at).days*-1 >= dados['antialt']['day']:
+                print(dados['antialt']['day'])
+                #await member.ban()
                 return
         except:pass
         for i in dados['config']['autorole']:
@@ -312,7 +314,9 @@ class events(commands.Cog):
         mensagem = mensagem.replace('[guildname]',member.guild.name)
         channel = bot.get_channel(int(dados['config']['welcome_channel']))        
         await channel.send(mensagem)
-        await CConta(member)
+        try:
+            await CConta(member)
+        except:pass
         #dados['users'][str(member.id)] = {'warns':0,'ficha':{},'fichamute':{},'contmute':0,'xp':0,'msg':0,'xp_time':0} 
         if dados['config']['automessage'] != 0:
             mensagem = dados['config']['automessage']
@@ -2641,6 +2645,14 @@ class Dev():
                 else:
                     await ctx.send(f":question: | **MATCH: {a.groups()} | {a.string}**")
             except:await ctx.send(":x: | **Formato inválido**")
+    class ram(commands.Cog):
+        @commands.command(name='regex',aliases=['re'])
+        @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
+        async def ram(self,ctx):
+            if ctx.author.id not in devs: return
+            await ctx.send(f"Ram: {discloud.ram()}")
     bot.add_cog(hastebin(bot))
     bot.add_cog(ocr(bot))
     bot.add_cog(regex(bot))
@@ -2651,6 +2663,7 @@ class Dev():
     bot.add_cog(_eval(bot))
     bot.add_cog(ping(bot))
     bot.add_cog(QR(bot))
+    bot.add_cog(ram(bot))
     bot.add_cog(Short(bot))
     bot.add_cog(Repo(bot))
     #bot.add_cog(Traduzir(bot))
