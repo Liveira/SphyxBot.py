@@ -2646,7 +2646,7 @@ class Dev():
                     await ctx.send(f":question: | **MATCH: {a.groups()} | {a.string}**")
             except:await ctx.send(":x: | **Formato inválido**")
     class ram(commands.Cog):
-        @commands.command(name='regex',aliases=['re'])
+        @commands.command(name='ram',aliases=['rm'])
         @commands.before_invoke(usou)
         @commands.cooldown(1,5,commands.BucketType.member)
         @blacklists()
