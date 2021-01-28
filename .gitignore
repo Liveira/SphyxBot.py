@@ -2,3 +2,6 @@
 /WorkSpace.code-workspace
 /Teste
 /JorgeMusicas
+/src/commands/config.json
+/src/__pycache__
+/src/commands/__pycache__
