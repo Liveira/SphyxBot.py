@@ -274,7 +274,7 @@ class Dev(commands.Cog):
         async def pypi(self, ctx,repo:str):       
             if repo in package_list:
                 req = requests.get(f'https://pypi.org/pypi/{repo}/json')
-                j = req.json()
-                embed = discord.Embed(title=f'Blibioteca: {j["name"]}')
+                j = req.json()['info']
+                await ctx.send(embed = discord.Embed(title=f'Blibioteca: {j["name"]} | v{j["version"]}',description=f"{j['summary']}\n\n**Versão do python: **{j['requires_python']}\n**Página inicial: ** {j['home_page']}\n**Link para o PyPi: **{j['package_url']}\n**Licença: **{j['license']}\n**Criador: ** {j['author']}"))
 def setup(self):
     bot.add_cog(Dev(bot))
