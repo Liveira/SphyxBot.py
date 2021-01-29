@@ -1,6 +1,10 @@
 import sys
 sys.path.append('..')
 from main import *
+from lxml import html
+response = requests.get("https://pypi.org/simple/")
+tree = html.fromstring(response.content)
+package_list = [package for package in tree.xpath('//a/text()')]
 class Dev(commands.Cog):
         @commands.command(name='repo', aliases=['repositorio'])
         @commands.before_invoke(usou)
@@ -263,5 +267,13 @@ class Dev(commands.Cog):
         async def ram(self,ctx):
             if ctx.author.id not in devs: return
             await ctx.send(f"Ram: {discloud.ram()}")
+        @commands.command()
+        @commands.before_invoke(usou)
+        @commands.cooldown(1,5,commands.BucketType.member)
+        @blacklists()
+        async def pypi(self, ctx,repo:str):       
+            if repo in package_list:
+                req = requests.get(f'https://pypi.org/pypi/{repo}/json')
+                print(req.json())
 def setup(self):
     bot.add_cog(Dev(bot))
