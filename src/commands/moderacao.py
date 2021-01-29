@@ -597,9 +597,14 @@ class mod(commands.Cog):
                 print(ex.args)
                 await ctx.send(":x: | **Esse servidor não possui a função de TAGS...** Peça para um administrador usar o comando `.tags add`!")
         else:
+            dados = await Dados(ctx.guild.id)
             try:
-                dados = await Dados(ctx.guild.id)
-                if dados['tag'][tagName]['req'] == None:
+                rol = discord.utils.get(ctx.guild.roles,name=tagName)
+                if rol in ctx.author.roles:
+                    await ctx.author.remove_roles(rol)
+                    await ctx.send(":question: | **Tag removida**")
+                    return
+                elif dados['tag'][tagName]['req'] == 0:
                     rol = discord.utils.get(ctx.guild.roles,name=tagName)
                     await ctx.author.add_roles(rol)
                     await ctx.send(":question: | **Tag adicionada**")
@@ -612,7 +617,7 @@ class mod(commands.Cog):
                     else:
                         await ctx.send(f":x: | **Você não cumpre os requisitos! Você precisa ter o cargo `{role.name}`**")
             except Exception as ex:
-                await ctx.send(":x: | **Tag invalida**")
+                await ctx.send(f":x: | **Tag invalida** : {ex.args}")
     @tag.command(name='add',aliases=['adicionar'])
     @commands.before_invoke(usou)
     @commands.cooldown(1,5,commands.BucketType.member)
