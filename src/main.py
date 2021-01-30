@@ -91,8 +91,8 @@ def prefix(bot,message):
     lis=[]
     for i in x:
         lis.append(i)
-    return lis[0]['prefix']
-bot = commands.AutoShardedBot(command_prefix='s!',case_insensitive=True,intents=intents)
+    return commands.when_mentioned_or(*lis[0]['prefix'])(bot, message)
+bot = commands.AutoShardedBot(command_prefix=prefix,case_insensitive=True,intents=intents)
 bot.remove_command('help')
 epoch = datetime.datetime.utcfromtimestamp(0)
 @tasks.loop(seconds=30)
@@ -483,7 +483,6 @@ class events(commands.Cog):
                 await a.__call__(ctx)
                 return
             a = didyoumean.didYouMean(ctx.invoked_with.lower(),A)
-            
             if a == None:return
             msg = await ctx.send(f":question: | Você quis dizer... **{a}**?")
             await msg.add_reaction('✅')

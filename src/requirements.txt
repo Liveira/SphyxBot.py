@@ -16,3 +16,4 @@ python-dateutil
 get-stick-bugged-lol
 discloud
 lxml
+didyoumean.py

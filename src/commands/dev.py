@@ -2,8 +2,9 @@ import sys
 sys.path.append('..')
 from main import *
 from lxml import html
-#tree = reqSTRING('https://pypi.org/simple/')
-#package_list = [package for package in tree.xpath('//a/text()')]
+from _requests import *
+tree = reqSTRING('https://pypi.org/simple/')
+package_list = [package for package in tree.xpath('//a/text()')]
 class Dev(commands.Cog):
         @commands.command(name='repo', aliases=['repositorio'])
         @commands.before_invoke(usou)
