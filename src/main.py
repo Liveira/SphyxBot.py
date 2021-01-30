@@ -4,6 +4,7 @@
   MIT LICENSE 2020 - 2021
       LIVEIRA;DREAMCAT
 '''
+import sys
 import asyncio
 from io import *
 import contextlib,re
@@ -39,6 +40,9 @@ import pyshorteners
 import qrcode,pymongo
 import markdown
 import discloud
+from didyoumean import didyoumean
+### Setando config DYM
+didyoumean.threshold = 0.6
 #from translate import Translator
 intents = intents = discord.Intents.all()
 log = ""
@@ -453,7 +457,7 @@ class events(commands.Cog):
             await ctx.send(":x: | **Eu não consegui encontrar essa pessoa**")
         elif isinstance(error, ChannelNotReadable):
             await ctx.send(":x: | **Não consigo mandar mensagens no canal!**")
-        elif isinstance(error, BotMissingPermissions):
+        elif isinstance(error, MissingPermissions):
             await ctx.send(":x: | **Eu não tenho permissões para fazer isso...**")
         elif isinstance(error, CommandOnCooldown):
             
@@ -474,9 +478,25 @@ class events(commands.Cog):
                 except:return
             else:await ctx.send(f":x: | **Espere {int(error.retry_after)} segundos para usar o comando novamente**")
         elif isinstance(error, CommandNotFound):
-            return
+            if ctx.invoked_with == f"<@!{bot.user.id}>" or ctx.invoked_with == f"<@{bot.user.id}>":
+                a = bot.get_command('ping')
+                await a.__call__(ctx)
+                return
+            a = didyoumean.didYouMean(ctx.invoked_with.lower(),A)
+            
+            if a == None:return
+            msg = await ctx.send(f":question: | Você quis dizer... **{a}**?")
+            await msg.add_reaction('✅')
+            def checkr(reaction,user):
+                return user == ctx.message.author and reaction.emoji == '✅' and msg.id == reaction.message.id
+            try:
+                await bot.wait_for('reaction_add',check=checkr,timeout=15)
+                b = bot.get_command(a)
+                await b.__call__(ctx,**ctx.kwargs)
+            except asyncio.TimeoutError:
+                await msg.clear_reaction('✅') 
         elif isinstance(error, EmojiNotFound):
-            await ctx.send(":x: | **Eu não encontrei esse emoji")
+            await ctx.send(":x: | **Eu não encontrei esse emoji")   
         elif isinstance(error, CheckFailure):
             return
         else:
@@ -485,8 +505,14 @@ bot.add_cog(events(bot))
 async def shop() -> dict:
     with open('shop.json','r',encoding='utf-8') as f:
         return dict(json.load(f)) 
+A = []
 for i in os.listdir('./commands'):
     if i.endswith(".py"):
         bot.load_extension('commands.'+i.replace(".py",''))
         print(f"Arquivo: {i} | Carregado com sucesso!")
-bot.run(config['token2'])
+for i in bot.commands:
+    A.append(i.name)
+    for x in i.aliases:
+        A.append(x)
+
+bot.run(config['token'])
