@@ -94,7 +94,7 @@ class Div(commands.Cog):
         @commands.before_invoke(usou)
         @commands.cooldown(1,5,commands.BucketType.member)
         @blacklists()
-        async def art(self,ctx,user: discord.User=None):
+        async def fogo(self,ctx,user: discord.User=None):
             if await bl(ctx.author.id) == True:
                 return
             if user == None:
@@ -126,7 +126,7 @@ class Div(commands.Cog):
         @commands.before_invoke(usou)
         @commands.cooldown(1,5,commands.BucketType.member)
         @blacklists()
-        async def art(self,ctx,user: discord.User=None):
+        async def triste(self,ctx,user: discord.User=None):
             if await bl(ctx.author.id) == True:
                 return
             if user == None:

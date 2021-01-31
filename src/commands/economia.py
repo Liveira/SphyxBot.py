@@ -91,6 +91,7 @@ class Economia(commands.Cog):
                 horario = horario.lower()
                 await msg.add_reaction('🎉')
                 global vargv
+                dados = await Dados(ctx.guild.id)
                 try:
                     tim = int(re.search("^([0-9]+[1-6]*)([smhd])$",horario).group(1))
                     d = re.search("^([0-6]+)([smhd])$",horario).group(2)
@@ -98,7 +99,14 @@ class Economia(commands.Cog):
                     time = tim * ti[d]
                 except:
                     await ctx.send("Formatos de horarios disponiveis [s/m/h/d]")
+                    await msg.delete()
                     return
+                if not 'GV' in dados:
+                    dados['GV'] = {}
+                dados['GV'][str(msg.id)] = {
+                    "win":[]
+                }
+                
                 if time < 61:
                     await asyncio.sleep(time)
                     msgA=''

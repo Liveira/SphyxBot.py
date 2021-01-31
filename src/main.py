@@ -33,7 +33,6 @@ from discord.ext import commands,tasks
 from discord.ext.commands.errors import BotMissingPermissions, ChannelNotFound, ChannelNotReadable, CheckFailure, CommandInvokeError, CommandNotFound, CommandOnCooldown, EmojiNotFound, MemberNotFound, MissingPermissions, RoleNotFound, UserNotFound
 from discord.flags import Intents
 from dpymenus import Page, PaginatedMenu
-from requests.api import request
 import base64
 import dbl
 import pyshorteners
@@ -271,18 +270,21 @@ class events(commands.Cog):
                    #dados['Servers'][str(message.guild.id)]['users'][str(message.author.id)]['xp'] += int(randrange(int(int(config['mediaxp']) /2),int(int(config['mediaxp']))))
                    #dados['Servers'][str(message.guild.id)]['users'][str(message.author.id)]['xp_time'] = (datetime.datetime.utcnow() - epoch).total_seconds()'''
     @commands.Cog.listener()
-    async def on_guild_join(self,guild):
-        lo = await guild.audit_logs(action=discord.AuditLogAction.bot_add).flatten()
-        use = lo[0].user
-        await use.send("Obrigado por me adicionar!\n\nEu tenho algumas informações que podem ser úteis para você, caso queira configurar o seu servidor você usa o comando `.config` que ele vai listar todos os comandos e como usar cada um, enfim muito obrigado por me adicionar!\n\nVocê pode tentar ir no meu discord oficial! -> https://discord.gg/CG7spnTsKa \nOu ver os meus comandos -> https://tinyurl.com/y99phkrp")
-        await bot.get_user(563448056125587457).send(f"Arrombado entrei no servidor: {guild.name} | Membros: {len(guild.members)} | Dono: {guild.owner.name}")
+    async def on_guild_join(self,guild:discord.Guild):
+        try:
+            lo = await guild.audit_logs(action=discord.AuditLogAction.bot_add).flatten()
+            use = lo[0].user
+            await use.send("Obrigado por me adicionar!\n\nEu tenho algumas informações que podem ser úteis para você, caso queira configurar o seu servidor você usa o comando `.config` que ele vai listar todos os comandos e como usar cada um, enfim muito obrigado por me adicionar!\n\nVocê pode tentar ir no meu discord oficial! -> https://discord.gg/CG7spnTsKa \nOu ver os meus comandos -> https://tinyurl.com/y99phkrp")
+            if guild.id in await listallservers():
+                await use.send("Pelo que eu vi aqui parece que eu já entrei nesse servidor, todas as configurações que estavam antes foram aplicados agora...")
+                return
+        except:
+            pass
+        await bot.get_user(563448056125587457).send(f"Arrombado entrei no servidor: {guild.name} | Membros: {len(guild.members)} | Dono: {guild.owner.name} | icon {guild.icon_url}")
         dados = await Dados(guild.id)
         user={}
         lista=[]
         fi = False
-        if guild.id in await listallservers():
-            await use.send("Pelo que eu vi aqui parece que eu já entrei nesse servidor, todas as configurações que estavam antes foram aplicados agora...")
-            return
         await GCConta(guild)
         async for i in guild.fetch_members(limit=None):
             if i.bot != True:
@@ -485,15 +487,6 @@ class events(commands.Cog):
             a = didyoumean.didYouMean(ctx.invoked_with.lower(),A)
             if a == None:return
             msg = await ctx.send(f":question: | Você quis dizer... **{a}**?")
-            await msg.add_reaction('✅')
-            def checkr(reaction,user):
-                return user == ctx.message.author and reaction.emoji == '✅' and msg.id == reaction.message.id
-            try:
-                await bot.wait_for('reaction_add',check=checkr,timeout=15)
-                b = bot.get_command(a)
-                await b.__call__(ctx,**ctx.kwargs)
-            except asyncio.TimeoutError:
-                await msg.clear_reaction('✅') 
         elif isinstance(error, EmojiNotFound):
             await ctx.send(":x: | **Eu não encontrei esse emoji")   
         elif isinstance(error, CheckFailure):

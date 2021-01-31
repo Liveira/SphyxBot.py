@@ -3,8 +3,7 @@ sys.path.append('..')
 from main import *
 from lxml import html
 from _requests import *
-tree = reqSTRING('https://pypi.org/simple/')
-package_list = [package for package in tree.xpath('//a/text()')]
+
 class Dev(commands.Cog):
         @commands.command(name='repo', aliases=['repositorio'])
         @commands.before_invoke(usou)
@@ -271,7 +270,9 @@ class Dev(commands.Cog):
         @commands.before_invoke(usou)
         @commands.cooldown(1,5,commands.BucketType.member)
         @blacklists()
-        async def pypi(self, ctx,repo:str):       
+        async def pypi(self, ctx,repo:str):
+            tree = await reqSTRING('https://pypi.org/simple/')
+            package_list = [package for package in tree.xpath('//a/text()')]       
             if repo in package_list:
                 j = reqJSON(f'https://pypi.org/pypi/{repo}/json')['info']
                 await ctx.send(embed = discord.Embed(title=f'Blibioteca: {j["name"]} | v{j["version"]}',description=f"{j['summary']}\n\n**Versão do python: **{j['requires_python']}\n**Página inicial: ** {j['home_page']}\n**Link para o PyPi: **{j['package_url']}\n**Licença: **{j['license']}\n**Criador: ** {j['author']}"))

@@ -1,0 +1,157 @@
+{
+    "1": {
+        "name": "DAC",
+        "usa": true,
+        "desc": "Um simples BackGround Amarelo/Ciano",
+        "preco": 7500,
+        "preview": "https://cdn.discordapp.com/attachments/776197504378732555/794262296338890752/DGA.png",
+        "categoria": "BackGround Profile",
+        "onetime": true,
+        "ti": "back-pf",
+        "author": "SphyX Team"
+    },
+    "2": {
+        "name": "Moonlight Waves",
+        "usa": true,
+        "desc": "C\u00e9u noturno neblinado com paisagem oce\u00e2nica",
+        "preco": 10000,
+        "preview": "https://media.discordapp.net/attachments/786001891922149436/796000135393050654/Moonlight_Waves_auto_x2.png?width=1400&height=1000",
+        "categoria": "BackGround Profile",
+        "onetime": true,
+        "ti": "back-pf",
+        "author": "F\u2206llenn"
+    },
+    "3": {
+        "name": "Feliz",
+        "usa": true,
+        "desc": "Espalhe a sua felicidade no mundo",
+        "preco": 5000,
+        "preview": "https://media.discordapp.net/attachments/786001891922149436/795086401925545984/cry.png?width=1214&height=683",
+        "categoria": "BackGround Profile",
+        "onetime": true,
+        "ti": "back-pf",
+        "author": null
+    },
+    "4": {
+        "name": "Legal",
+        "usa": true,
+        "desc": "Somente po\u00e9tico...",
+        "preco": 5000,
+        "preview": "https://media.discordapp.net/attachments/786001891922149436/795086401702985766/thumbsup.png?width=1214&height=683",
+        "categoria": "BackGround Profile",
+        "onetime": true,
+        "ti": "back-pf",
+        "author": null
+    },
+    "5": {
+        "name": "Medo",
+        "usa": true,
+        "desc": "BackGround perfeito para clickbaits",
+        "preco": 5000,
+        "preview": "https://cdn.discordapp.com/attachments/786001891922149436/795086402119270450/image.jpg",
+        "categoria": "BackGround Profile",
+        "onetime": true,
+        "ti": "back-pf",
+        "author": null
+    },
+    "6": {
+        "name": "Gato comendo chips",
+        "usa": true,
+        "desc": "Mais uma da cole\u00e7\u00e3o gatos tristes",
+        "preco": 7500,
+        "preview": "https://cdn.discordapp.com/attachments/785511284560756776/795368065578696745/gato_kkkkkkkkkkkkkkkkkk.png",
+        "categoria": "BackGround Profile",
+        "onetime": true,
+        "ti": "back-pf",
+        "author": null
+    },
+    "cont": 14,
+    "7": {
+        "name": "Vermelho",
+        "desc": "Simplesmente vermelho...",
+        "preco": 2500,
+        "preview": "https://media.discordapp.net/attachments/776197504378732555/795695518293819442/desconhecido.png",
+        "author": null,
+        "ti": "back-pf",
+        "categoria": "BackGround Profile",
+        "onetime": true,
+        "usa": true
+    },
+    "8": {
+        "name": "TLOZ I",
+        "desc": "BackGround da cole\u00e7\u00e3o Games I",
+        "preco": 10000,
+        "preview": "https://media.discordapp.net/attachments/776197504378732555/795697771838701568/desconhecido.jpeg?width=643&height=459",
+        "author": null,
+        "ti": "back-pf",
+        "categoria": "BackGround Profile",
+        "onetime": true,
+        "usa": true
+    },
+    "9": {
+        "name": "Verde",
+        "desc": "Verde...",
+        "preco": 2500,
+        "preview": "https://cdn.discordapp.com/attachments/776197504378732555/795701061578260510/desconhecido.png",
+        "author": null,
+        "ti": "back-pf",
+        "categoria": "BackGround Profile",
+        "onetime": true,
+        "usa": true
+    },
+    "10": {
+        "name": "TLOZ II",
+        "desc": "Background da cole\u00e7\u00e3o games II",
+        "preco": 10000,
+        "preview": "https://cdn.discordapp.com/attachments/776197504378732555/795701767538999336/desconhecido.png",
+        "author": "Nintendo",
+        "ti": "back-pf",
+        "categoria": "BackGround Profile",
+        "onetime": true,
+        "usa": true
+    },
+    "11": {
+        "name": "Umbrella Corporation",
+        "desc": "Background da cole\u00e7\u00e3o Games III",
+        "preco": 10000,
+        "preview": "https://media.discordapp.net/attachments/776197504378732555/795701160484012092/desconhecido.jpeg",
+        "author": "Capcom",
+        "ti": "back-pf",
+        "categoria": "BackGround Profile",
+        "onetime": true,
+        "usa": true
+    },
+    "12": {
+        "name": "Void",
+        "desc": "\u00c9 S\u00f3 um void mesmo",
+        "preco": 10000,
+        "preview": "https://cdn.discordapp.com/attachments/776197504378732555/796027595103141948/dsadad.png",
+        "author": "Voltazar",
+        "ti": "back-pf",
+        "categoria": "BackGround Profile",
+        "onetime": true,
+        "usa": true
+    },
+    "13": {
+        "name": "TLOZ III",
+        "desc": "Background da cole\u00e7\u00e3o games V",
+        "preco": 10000,
+        "preview": "https://cdn.discordapp.com/attachments/776197504378732555/797891891948814347/thumb-1920-559247.png",
+        "author": "Nintendo",
+        "ti": "back-pf",
+        "categoria": "BackGround Profile",
+        "onetime": true,
+        "usa": true
+    },
+    "14": {
+        "name": "Moonlight Waves 2",
+        "desc": "Oceano noturno",
+        "preco": 10000,
+        "preview": "https://cdn.discordapp.com/attachments/786001891922149436/797909637763563530/15_Sem_Titulo_20210110162752.png",
+        "author": "F\u2206llenn",
+        "ti": "back-pf",
+        "categoria": "BackGround Profile",
+        "onetime": true,
+        "usa": true
+    }
+}
