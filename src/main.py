@@ -492,6 +492,7 @@ class events(commands.Cog):
         elif isinstance(error, CheckFailure):
             return
         else:
+            print(error)
             await ctx.send(f":x: | **Aconteceu um erro inesperado...** ```{error.args}```Você pode reportar esse erro no servidor de suporte...")
 bot.add_cog(events(bot))  
 async def shop() -> dict:
@@ -503,8 +504,8 @@ for i in os.listdir('./commands'):
         bot.load_extension('commands.'+i.replace(".py",''))
         print(f"Arquivo: {i} | Carregado com sucesso!")
 for i in bot.commands:
-    A.append(i.name)
-    for x in i.aliases:
-        A.append(x)
+    if not i.hidden:
+        A.append(i.name)
+    
 
 bot.run(config['token'])

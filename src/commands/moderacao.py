@@ -39,7 +39,7 @@ class mod(commands.Cog):
     @cmdwarn.command(name='check',aliases=['list'])
     @commands.has_permissions(kick_members=True)
     @commands.cooldown(1,5,commands.BucketType.member)
-    async def check(self,ctx,user: discord.Member=None):
+    async def check(ctx,user: discord.Member=None):
         if user == None:
             await padrao(ctx,'Moderação','list','Serve para listar todos os warns de um determinado membro, alem de listar, ele mostra todas as informações que podem ser úteis!','```warn list <user>*```','```Listar | Check```','Staff')
         else:
@@ -520,8 +520,8 @@ class mod(commands.Cog):
         if await bl(ctx.author.id) == True:
             return
         channel = channel or ctx.channel
-        kek = channel.overwrites
-        if not kek[ctx.guild.default_role].send_messages:
+        kek = channel.overwrites_for(ctx.guild.default_role)
+        if not kek.send_messages:
             await ctx.send(':x: | **O canal escolhido já não tem permissão de enviar mensagens**')
             return
         await channel.edit(overwrites={
@@ -536,8 +536,8 @@ class mod(commands.Cog):
         if await bl(ctx.author.id) == True:
             return
         channel = channel or ctx.channel
-        kek = channel.overwrites
-        if kek[ctx.guild.default_role].send_messages:
+        kek = channel.overwrites_for(ctx.guild.default_role)
+        if kek.send_messages:
             await ctx.send(':x: | **O canal escolhido já tem permissão de enviar mensagens**')
             return
         await channel.edit(overwrites={
