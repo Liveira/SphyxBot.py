@@ -508,4 +508,4 @@ for i in bot.commands:
         A.append(i.name)
     
 
-bot.run(config['token'])
+bot.run(config['token2'])

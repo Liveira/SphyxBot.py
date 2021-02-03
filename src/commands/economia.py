@@ -86,10 +86,9 @@ class Economia(commands.Cog):
             if horario == None:
                 await ctx.send(":x: | **Informe o tempo do sorteio e a mensagem**")
             else:
-                embed = discord.Embed(title='Sorteio',description=f'\n{message}**\nNumero de ganhadores {num}\nTempo de sorteio {horario}**')
-                msg = await ctx.send(embed=embed)
+                
                 horario = horario.lower()
-                await msg.add_reaction('🎉')
+                
                 global vargv
                 dados = await Dados(ctx.guild.id)
                 try:
@@ -97,14 +96,20 @@ class Economia(commands.Cog):
                     d = re.search("^([0-6]+)([smhd])$",horario).group(2)
                     ti = {"s":1,"m":60,"h":60*60,"d":60*60*60}
                     time = tim * ti[d]
+                    
                 except:
                     await ctx.send("Formatos de horarios disponiveis [s/m/h/d]")
-                    await msg.delete()
                     return
+                embed = discord.Embed(title='SphyX Giveway',description=f'\n🎉 | **{message}**\n🏆 | **Ganhadores**: {num}\n⏰ | **Pendente**').set_footer(text=f'Acaba em ->  ')
+                embed.timestamp = datetime.datetime.now() + delt(time)
+                msg = await ctx.send(embed=embed)
+                await msg.add_reaction('🎉')
                 if not 'GV' in dados:
                     dados['GV'] = {}
                 dados['GV'][str(msg.id)] = {
-                    "win":[]
+                    "gar":[],
+                    "premio":message,
+                    "chan":ctx.channel.id
                 }
                 
                 if time < 61:
@@ -113,14 +118,20 @@ class Economia(commands.Cog):
                     lk=[]
                     krek=[]
                     for i in range(num):
-                        lk.append(random.choice(vargv[str(ctx.guild.id)][msg.id]['gar']))
+                        if dados['GV'][str(msg.id)]['gar'] == []:
+                            await msg.edit(embed= discord.Embed(title='SphyX Giveway',description=f'\n🎉 | **{message}**\n🏆 | **Ganhadores**: Ninguém... \n⏰ | **Concluida**').set_footer(text=f'Acabou ás ->  '))
+                            await ctx.send("👀 | **Ninguém participou do sorteio**")
+                            del dados['GV'][str(msg.id)]
+                            return
+                        lk.append(random.choice(dados['GV'][str(msg.id)]['gar']))
                         user = ctx.guild.get_member(lk[i])
                         while user in krek:
-                            lk.append(random.choice(vargv[str(ctx.guild.id)][msg.id]['gar']))
+                            lk.append(random.choice(dados['GV'][str(msg.id)]['gar']))
                             user = ctx.guild.get_member(lk[i])
                         msgA = msgA + user.mention + ','
                         krek.append(user)
-                    await ctx.send(f" 🎉 {msgA} Ganhou o sorteio!")                
+                    await ctx.send(f" 🎉 {msgA} Ganhou | **{dados['GV'][str(msg.id)]['premio']}") 
+                    del dados['GV'][str(msg.id)]               
         @commands.Cog.listener()
         async def on_reaction_add(self,reaction,user):
             global vargv
