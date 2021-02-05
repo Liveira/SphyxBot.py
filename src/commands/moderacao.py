@@ -548,7 +548,7 @@ class mod(commands.Cog):
     @commands.has_permissions(manage_emojis=True)
     @commands.before_invoke(usou)
     @commands.cooldown(1,5,commands.BucketType.member)
-    async def addemoji(self,ctx: commands.Context,nm=None,emoji: commands.Greedy[discord.Emoji]=None,link=None):
+    async def addemoji(self,ctx: commands.Context,nm=None,emoji: commands.Greedy[discord.PartialEmoji]=None,link=None):
         if await bl(ctx.author.id) == True:
             return
         a = ''
@@ -557,13 +557,14 @@ class mod(commands.Cog):
             await ctx.send(":x: | **Você esqueceu de colocar o link ou emoji para adicionar**")
         if nm == None:
             await ctx.send(":x: | **Formato errado! Aqui está um formato certo `.addemoji <nome> <emoji ou link>`")
+            return
         if nm != None and link != None:
             nam = nm
             a = requests.get(link).content
         if nm != None and emoji != None:
             nam = nm
-            emoji = bot.get_emoji(emoji[0].id)
-            a = requests.get(emoji.url).content
+            
+            a = requests.get(emoji[0].url).content
         a=await ctx.guild.create_custom_emoji(name=nam.lower().replace("?",""),image=a)
         await ctx.send(f":question: | **Emoji adicionado!** {str(a)}")
     '''class clean(commands.Cog):

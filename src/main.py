@@ -463,7 +463,7 @@ class events(commands.Cog):
             await ctx.send(":x: | **Eu não tenho permissões para fazer isso...**")
         elif isinstance(error, CommandOnCooldown):
             
-            if ctx.command.name == 'daily':return
+            if ctx.command.name == 'daily' or ctx.command.name == "rep":return
             elif ctx.author.id not in colDown:
                 colDown[ctx.author.id] = {ctx.command.name:{'es':datetime.datetime.now() + delt(seconds=error.retry_after),'vz':0}}
             else:

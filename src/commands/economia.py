@@ -1,6 +1,7 @@
 import sys
 sys.path.append('..')
 from main import *
+import pytz
 class Economia(commands.Cog):
         @commands.command(name='atm',aliases=['money','coin','coins','dinheiro','meudinheiro','mymoney'])
         @commands.before_invoke(usou)
@@ -80,7 +81,7 @@ class Economia(commands.Cog):
         @commands.before_invoke(usou)
         @commands.cooldown(1,5,commands.BucketType.member)
         @blacklists()
-        async def giveway(self,ctx,horario=None,num: int=1,*,message:str='Sorteio'):
+        async def giveway(self,ctx,horario=None,num:commands.greedy[int]=1,*,message:str='Sorteio'):
             if await bl(ctx.author.id) == True:
                 return
             if horario == None:
@@ -101,7 +102,7 @@ class Economia(commands.Cog):
                     await ctx.send("Formatos de horarios disponiveis [s/m/h/d]")
                     return
                 embed = discord.Embed(title='SphyX Giveway',description=f'\n🎉 | **{message}**\n🏆 | **Ganhadores**: {num}\n⏰ | **Pendente**').set_footer(text=f'Acaba em ->  ')
-                embed.timestamp = datetime.datetime.now() + delt(time)
+                embed.timestamp = datetime.datetime.now(pytz.timezone("America/Belem")) + delt(time)
                 msg = await ctx.send(embed=embed)
                 await msg.add_reaction('🎉')
                 if not 'GV' in dados:
@@ -111,15 +112,18 @@ class Economia(commands.Cog):
                     "premio":message,
                     "chan":ctx.channel.id
                 }
-                
+                await salvarS(dados,ctx.guild.id)
                 if time < 61:
                     await asyncio.sleep(time)
+                    dados = await Dados(ctx.guild.id)
                     msgA=''
                     lk=[]
                     krek=[]
                     for i in range(num):
                         if dados['GV'][str(msg.id)]['gar'] == []:
-                            await msg.edit(embed= discord.Embed(title='SphyX Giveway',description=f'\n🎉 | **{message}**\n🏆 | **Ganhadores**: Ninguém... \n⏰ | **Concluida**').set_footer(text=f'Acabou ás ->  '))
+                            embed= discord.Embed(title='SphyX Giveway',description=f'\n🎉 | **{message}**\n🏆 | **Ganhadores**: Ninguém... \n⏰ | **Concluida**').set_footer(text=f'Acabou ás: ')
+                            embed.timestamp = datetime.datetime.now(pytz.timezone("America/Belem"))
+                            await msg.edit(embed=embed)
                             await ctx.send("👀 | **Ninguém participou do sorteio**")
                             del dados['GV'][str(msg.id)]
                             return
@@ -130,19 +134,22 @@ class Economia(commands.Cog):
                             user = ctx.guild.get_member(lk[i])
                         msgA = msgA + user.mention + ','
                         krek.append(user)
-                    await ctx.send(f" 🎉 {msgA} Ganhou | **{dados['GV'][str(msg.id)]['premio']}") 
+                    await ctx.send(f" 🎉 {msgA} {'Ganhou' if len(dados['GV'][str(msg.id)]['gar']) <= 1 else 'Ganharam'} | **{dados['GV'][str(msg.id)]['premio']}**") 
+                    embed = discord.Embed(title='SphyX Giveway',description=f'\n🎉 | **{message}**\n🏆 | **Ganhador(es)**: {msgA} \n⏰ | **Concluida**\n\n:question: | Você sabia que a probabilidade de ganhar era **{round((len(krek)/len(dados["GV"][str(msg.id)]["gar"]))*100)}%**?').set_footer(text=f'Acabou ás:  ')
+                    embed.timestamp = datetime.datetime.now(pytz.timezone('America/Belem'))
+                    await msg.edit(embed=embed)
                     del dados['GV'][str(msg.id)]               
         @commands.Cog.listener()
         async def on_reaction_add(self,reaction,user):
-            global vargv
+            dados = await Dados(reaction.message.guild.id)
             if user.bot == True:
                 return
             if reaction.emoji == '🎉':
-                if str(reaction.message.guild.id) in vargv:
-                    print(reaction.message.id)
-                    print(vargv[str(reaction.message.guild.id)])
-                    if reaction.message.id in vargv[str(reaction.message.guild.id)]:
-                        vargv[str(reaction.message.guild.id)][reaction.message.id]['gar'].append(user.id)                        
+                try:
+                    if str(reaction.message.id) in dados['GV']:
+                        dados['GV'][str(reaction.message.id)]['gar'].append(user.id)  
+                        await salvarS(dados,reaction.message.guild.id)                      
+                except Exception as ex:await reaction.message.channel.send(ex.args)
         @commands.command(name='shop',aliases=['store','loja'])
         @commands.before_invoke(usou)
         @commands.cooldown(1,5,commands.BucketType.member)

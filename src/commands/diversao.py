@@ -341,8 +341,8 @@ class Div(commands.Cog):
             qntlad = int(match.group(2))
             result = 0
             lis = []
-            for i in range(1,qntdad):
-                l = random.randrange(0,qntlad)
+            for i in range(0,qntdad):
+                l = random.randrange(0,qntlad+1)
                 result += l
                 lis.append(l)
             if match.group(3) != None:
