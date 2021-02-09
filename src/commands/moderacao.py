@@ -168,7 +168,7 @@ class mod(commands.Cog):
             try:
                 tim = int(re.search("^([0-9]+[1-6]*)([smhd])$",tempoMute).group(1))
                 d = re.search("^([0-9]+[1-6]*)([smhd])$",tempoMute).group(2)
-                ti = {"s":1,"m":60,"h":60*60,"d":60*60*60}
+                ti = {"s":1,"m":60,"h":60*60,"d":60*60*24}
                 try:
                     time = tim * ti[d]
                 except KeyError:

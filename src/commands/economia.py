@@ -81,7 +81,7 @@ class Economia(commands.Cog):
         @commands.before_invoke(usou)
         @commands.cooldown(1,5,commands.BucketType.member)
         @blacklists()
-        async def giveway(self,ctx,horario=None,num:commands.greedy[int]=1,*,message:str='Sorteio'):
+        async def giveway(self,ctx,horario=None,num:commands.Greedy[int]=1,*,message:str='Sorteio sem nome'):
             if await bl(ctx.author.id) == True:
                 return
             if horario == None:
@@ -95,14 +95,14 @@ class Economia(commands.Cog):
                 try:
                     tim = int(re.search("^([0-9]+[1-6]*)([smhd])$",horario).group(1))
                     d = re.search("^([0-6]+)([smhd])$",horario).group(2)
-                    ti = {"s":1,"m":60,"h":60*60,"d":60*60*60}
+                    ti = {"s":1,"m":60,"h":60*60,"d":60*60*24}
                     time = tim * ti[d]
                     
                 except:
                     await ctx.send("Formatos de horarios disponiveis [s/m/h/d]")
                     return
                 embed = discord.Embed(title='SphyX Giveway',description=f'\n🎉 | **{message}**\n🏆 | **Ganhadores**: {num}\n⏰ | **Pendente**').set_footer(text=f'Acaba em ->  ')
-                embed.timestamp = datetime.datetime.now(pytz.timezone("America/Belem")) + delt(time)
+                embed.timestamp = datetime.datetime.now(pytz.timezone("America/Belem")) + delt(seconds=time)
                 msg = await ctx.send(embed=embed)
                 await msg.add_reaction('🎉')
                 if not 'GV' in dados:
@@ -110,7 +110,11 @@ class Economia(commands.Cog):
                 dados['GV'][str(msg.id)] = {
                     "gar":[],
                     "premio":message,
-                    "chan":ctx.channel.id
+                    "tempo":time,
+                    "cabou":datetime.datetime.now() + delt(seconds=time),
+                    "chan":ctx.channel.id,
+                    "numGan":num,
+                    "msgSortID":msg.id
                 }
                 await salvarS(dados,ctx.guild.id)
                 if time < 61:
@@ -126,6 +130,7 @@ class Economia(commands.Cog):
                             await msg.edit(embed=embed)
                             await ctx.send("👀 | **Ninguém participou do sorteio**")
                             del dados['GV'][str(msg.id)]
+                            await salvarS(dados,ctx.guild.id)
                             return
                         lk.append(random.choice(dados['GV'][str(msg.id)]['gar']))
                         user = ctx.guild.get_member(lk[i])
@@ -138,7 +143,8 @@ class Economia(commands.Cog):
                     embed = discord.Embed(title='SphyX Giveway',description=f'\n🎉 | **{message}**\n🏆 | **Ganhador(es)**: {msgA} \n⏰ | **Concluida**\n\n:question: | Você sabia que a probabilidade de ganhar era **{round((len(krek)/len(dados["GV"][str(msg.id)]["gar"]))*100)}%**?').set_footer(text=f'Acabou ás:  ')
                     embed.timestamp = datetime.datetime.now(pytz.timezone('America/Belem'))
                     await msg.edit(embed=embed)
-                    del dados['GV'][str(msg.id)]               
+                    del dados['GV'][str(msg.id)]  
+                    await salvarS(dados,ctx.guild.id)             
         @commands.Cog.listener()
         async def on_reaction_add(self,reaction,user):
             dados = await Dados(reaction.message.guild.id)

@@ -6,6 +6,7 @@
 '''
 import sys
 import asyncio
+import pytz
 from io import *
 import contextlib,re
 from json import decoder
@@ -100,9 +101,51 @@ async def blCheck():
     for i in blacklist.find():
         if datetime.datetime.now() >= i['time']:
             blacklist.delete_one({"_id":i['_id']})
-blCheck.start()
+@tasks.loop(seconds=30)
+async def givewayCheck():
+    for g in await listallservers():
+        dados = await Dados(int(g))
+        if not "GV" in dados:
+            continue 
+        a = []
+        guild: discord.Guild = bot.get_guild(g)
+        for i in dados['GV']:
+            if datetime.datetime.now() >= dados['GV'][i]['cabou']:
+                msgA=''
+                num = dados['GV'][i]['numGan']
+                c = guild.get_channel(dados['GV'][i]['chan'])
+                msg = await c.fetch_message(i)
+                lk=[]
+                krek=[]
+                for n in range(num):
+                    if dados['GV'][str(msg.id)]['gar'] == []:
+                        embed= discord.Embed(title='SphyX Giveway',description=f'\n🎉 | **{dados["GV"][i]["premio"]}**\n🏆 | **Ganhadores**: Ninguém... \n⏰ | **Concluida**').set_footer(text=f'Acabou ás: ')
+                        embed.timestamp = datetime.datetime.now(pytz.timezone("America/Belem"))
+                        await msg.edit(embed=embed)
+                        await c.send("👀 | **Ninguém participou do sorteio**")
+                        a.append(i)
+                        break
+                    lk.append(random.choice(dados['GV'][str(msg.id)]['gar']))
+                    user = guild.get_member(lk[n])
+                    while user in krek:
+                        lk.append(random.choice(dados['GV'][str(msg.id)]['gar']))
+                        user = guild.get_member(lk[n])
+                    msgA = msgA + user.mention + ','
+                    krek.append(user)
+                await c.send(f" 🎉 {msgA} {'Ganhou' if len(krek) <= 1 else 'Ganharam'} | **{dados['GV'][str(msg.id)]['premio']}**") 
+                embed = discord.Embed(title='SphyX Giveway',description=f'\n🎉 | **{dados["GV"][i]["premio"]}**\n🏆 | **Ganhador(es)**: {msgA} \n⏰ | **Concluida**\n\n:question: | Você sabia que a probabilidade de ganhar era **{round((len(krek)/len(dados["GV"][str(msg.id)]["gar"]))*100)}%**?').set_footer(text=f'Acabou ás:  ')
+                embed.timestamp = datetime.datetime.now(pytz.timezone('America/Belem'))
+                await msg.edit(embed=embed)
+                a.append(i)
+            else:
+                print(f"Checkagem falha [SEM TEMPO] -> {g}")
+        for i in a:
+            del dados['GV'][i]
+        await salvarS(dados,guild.id)
 @bot.event
 async def on_ready():
+    blCheck.start()
+    givewayCheck.start()
     await outroloop()
 async def listallservers():
     d = []
