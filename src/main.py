@@ -142,6 +142,7 @@ async def givewayCheck():
         for i in a:
             del dados['GV'][i]
         await salvarS(dados,guild.id)
+
 @bot.event
 async def on_ready():
     blCheck.start()
@@ -551,4 +552,4 @@ for i in bot.commands:
         A.append(i.name)
     
 
-bot.run(config['token2'])
+bot.run(config['token'])
